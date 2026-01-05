@@ -230,7 +230,6 @@ public class statslist extends ListenerAdapter {
 			ArrayList<Player> admins = new ArrayList<>();
 			ArrayList<Player> leaders = new ArrayList<>();
 			ArrayList<Player> coleaders = new ArrayList<>();
-			ArrayList<Player> marked = new ArrayList<>();
 			ArrayList<Player> regular = new ArrayList<>();
 
 			for (Player p : clanPlayers) {
@@ -243,8 +242,6 @@ public class statslist extends ListenerAdapter {
 					leaders.add(p);
 				} else if (p.getRole() == Player.RoleType.COLEADER) {
 					coleaders.add(p);
-				} else if (p.isMarked()) {
-					marked.add(p);
 				} else {
 					regular.add(p);
 				}
@@ -266,16 +263,6 @@ public class statslist extends ListenerAdapter {
 					content.append(formatPlayerLine(p, displayFields));
 				}
 				for (Player p : coleaders) {
-					updateProgress(event, title, ++processedPlayers, totalPlayers);
-					content.append("#").append(counter++).append(" ");
-					content.append(formatPlayerLine(p, displayFields));
-				}
-				content.append("----------------------------\n\n");
-			}
-
-			// Add marked section
-			if (!marked.isEmpty()) {
-				for (Player p : marked) {
 					updateProgress(event, title, ++processedPlayers, totalPlayers);
 					content.append("#").append(counter++).append(" ");
 					content.append(formatPlayerLine(p, displayFields));
@@ -313,7 +300,6 @@ public class statslist extends ListenerAdapter {
 			ArrayList<Player> admins = new ArrayList<>();
 			ArrayList<Player> leaders = new ArrayList<>();
 			ArrayList<Player> coleaders = new ArrayList<>();
-			ArrayList<Player> marked = new ArrayList<>();
 			ArrayList<Player> regular = new ArrayList<>();
 
 			for (Player p : players) {
@@ -323,8 +309,6 @@ public class statslist extends ListenerAdapter {
 					leaders.add(p);
 				} else if (p.getRole() == Player.RoleType.COLEADER) {
 					coleaders.add(p);
-				} else if (p.isMarked()) {
-					marked.add(p);
 				} else {
 					regular.add(p);
 				}
@@ -346,16 +330,6 @@ public class statslist extends ListenerAdapter {
 					content.append(formatPlayerLine(p, displayFields));
 				}
 				for (Player p : coleaders) {
-					updateProgress(event, title, ++processedPlayers, totalPlayers);
-					content.append("#").append(counter++).append(" ");
-					content.append(formatPlayerLine(p, displayFields));
-				}
-				content.append("----------------------------\n\n");
-			}
-
-			// Add marked section
-			if (!marked.isEmpty()) {
-				for (Player p : marked) {
 					updateProgress(event, title, ++processedPlayers, totalPlayers);
 					content.append("#").append(counter++).append(" ");
 					content.append(formatPlayerLine(p, displayFields));
@@ -527,9 +501,7 @@ public class statslist extends ListenerAdapter {
 					if (p.getRole() == Player.RoleType.COLEADER)
 						return 2;
 					return 3;
-				})
-				// Then by marked status (marked first within same role)
-				.thenComparing(Comparator.comparing(Player::isMarked).reversed());
+				});
 
 		// Add sort fields or default to alphabetical
 		if (sortFields.isEmpty()) {
@@ -595,7 +567,7 @@ public class statslist extends ListenerAdapter {
 				return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
 			});
 		default:
-			return Comparator.comparingInt((_) -> 0);
+			return Comparator.comparingInt((Player p) -> 0);
 		}
 	}
 

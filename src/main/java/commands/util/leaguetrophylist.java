@@ -478,8 +478,6 @@ public class leaguetrophylist extends ListenerAdapter {
 			HashMap<String, ArrayList<String>> clantagtoleaderstrings = new HashMap<>();
 			HashMap<String, ArrayList<String>> clantagtocoleaderstrings = new HashMap<>();
 
-			HashMap<String, ArrayList<String>> clantagtomarkedstrings = new HashMap<>();
-
 			ArrayList<String> playerstringssorted = new ArrayList<>();
 
 			for (int i = 0; i < allplayers.size(); i++) {
@@ -508,11 +506,6 @@ public class leaguetrophylist extends ListenerAdapter {
 							new ArrayList<>());
 					coleaderstrings.add(formatPlayerLine(p));
 					clantagtocoleaderstrings.put(clantag, coleaderstrings);
-					clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
-				} else if (p.isMarked()) {
-					ArrayList<String> markedstrings = clantagtomarkedstrings.getOrDefault(clantag, new ArrayList<>());
-					markedstrings.add(formatPlayerLine(p));
-					clantagtomarkedstrings.put(clantag, markedstrings);
 					clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
 				} else {
 					playerstringssorted.add(formatPlayerLine(p));
@@ -552,20 +545,6 @@ public class leaguetrophylist extends ListenerAdapter {
 				}
 
 				if (coleadersexist) {
-					content += "----------------------------\n\n";
-				}
-
-				boolean markedsexist = false;
-
-				for (String s : clantagtomarkedstrings.getOrDefault(tags, new ArrayList<>())) {
-					if (!markedsexist)
-						markedsexist = true;
-					content += "#" + counter + " ";
-					counter++;
-					content += s;
-				}
-
-				if (markedsexist) {
 					content += "----------------------------\n\n";
 				}
 
