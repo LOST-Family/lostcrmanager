@@ -498,6 +498,11 @@ public class Bot extends ListenerAdapter {
 
 			JSONObject data = new JSONObject(json);
 			JSONObject clanData = data.getJSONObject("clan");
+			if(clanData.has("finishTime")) {
+				System.out.println("Der Clan War für " + clantag + " ist bereits beendet.");
+				updateLastSentDate(reminderId);
+				return;
+			}
 			JSONArray participants = clanData.getJSONArray("participants");
 
 			// Build a map of player tag to decksUsedToday from API
