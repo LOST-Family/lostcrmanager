@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Kickpoint;
@@ -27,7 +29,7 @@ import util.MessageUtil;
 public class kpclan extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("kpclan"))
 			return;
 		event.deferReply().queue();
@@ -113,7 +115,7 @@ public class kpclan extends ListenerAdapter {
 	}
 
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("kpclan"))
 			return;
 
@@ -129,7 +131,7 @@ public class kpclan extends ListenerAdapter {
 	}
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String id = event.getComponentId();
 		if (!id.startsWith("kpclan_"))
 			return;

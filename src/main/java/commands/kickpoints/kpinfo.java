@@ -3,6 +3,8 @@ package commands.kickpoints;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.KickpointReason;
@@ -17,7 +19,7 @@ import util.MessageUtil;
 public class kpinfo extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("kpinfo"))
 			return;
 		event.deferReply().queue();
@@ -103,8 +105,9 @@ public class kpinfo extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("kpinfo"))
 			return;
 

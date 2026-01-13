@@ -2,6 +2,8 @@ package commands.memberlist;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Clan;
@@ -21,8 +23,9 @@ import util.MessageUtil;
 
 public class togglemark extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("togglemark"))
 			return;
 		String title = "Memberverwaltung";
@@ -117,8 +120,9 @@ public class togglemark extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onModalInteraction(ModalInteractionEvent event) {
+	public void onModalInteraction(@Nonnull ModalInteractionEvent event) {
 		if (event.getModalId().startsWith("togglemark_")) {
 			event.deferReply().queue();
 			String title = "Memberverwaltung";
@@ -145,8 +149,9 @@ public class togglemark extends ListenerAdapter {
 		}
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("togglemark"))
 			return;
 

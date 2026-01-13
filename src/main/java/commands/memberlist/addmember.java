@@ -3,6 +3,8 @@ package commands.memberlist;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Clan;
@@ -22,8 +24,9 @@ import util.MessageUtil;
 
 public class addmember extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("addmember"))
 			return;
 		event.deferReply().queue();
@@ -180,8 +183,9 @@ public class addmember extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("addmember"))
 			return;
 

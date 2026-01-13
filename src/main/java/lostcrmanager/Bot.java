@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -128,6 +130,7 @@ public class Bot extends ListenerAdapter {
 				.build();
 	}
 
+	@SuppressWarnings("null")
 	public static void registerCommands(JDA jda, String guildId) {
 		Guild guild = jda.getGuildById(guildId);
 		if (guild != null) {
@@ -318,13 +321,13 @@ public class Bot extends ListenerAdapter {
 	}
 
 	@Override
-	public void onReady(ReadyEvent event) {
+	public void onReady(@Nonnull ReadyEvent event) {
 		setJda(event.getJDA());
 		registerCommands(event.getJDA(), guild_id);
 	}
 
 	@Override
-	public void onShutdown(ShutdownEvent event) {
+	public void onShutdown(@Nonnull ShutdownEvent event) {
 		LinkWebServer.stop();
 		stopScheduler();
 	}
@@ -480,6 +483,7 @@ public class Bot extends ListenerAdapter {
 		}
 	}
 
+	@SuppressWarnings("null")
 	private static void sendReminder(int reminderId, String clantag, String channelId) {
 		try {
 			// Get clan info
@@ -610,6 +614,7 @@ public class Bot extends ListenerAdapter {
 		sendMessagesSequentially(channel, messages, 0, reminderId, clantag);
 	}
 
+	@SuppressWarnings("null")
 	private static void sendMessagesSequentially(TextChannel channel, ArrayList<String> messages, int index,
 			int reminderId, String clantag) {
 		if (index >= messages.size()) {

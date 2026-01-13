@@ -21,6 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Player;
@@ -37,7 +39,7 @@ import util.MessageUtil;
 public class leaguetrophylist extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("leaguetrophylist"))
 			return;
 		event.deferReply().queue();
@@ -291,8 +293,9 @@ public class leaguetrophylist extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("leaguetrophylist"))
 			return;
 
@@ -355,6 +358,7 @@ public class leaguetrophylist extends ListenerAdapter {
 		}
 	}
 
+	@SuppressWarnings("null")
 	private static String formatPlayerLine(Player p) {
 		boolean isMarked = p.isMarked();
 		// Status bestimmen

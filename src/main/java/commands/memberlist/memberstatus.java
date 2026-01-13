@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Player;
@@ -22,7 +24,7 @@ import util.MessageUtil;
 public class memberstatus extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("memberstatus"))
 			return;
 		event.deferReply().queue();
@@ -142,8 +144,9 @@ public class memberstatus extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("memberstatus"))
 			return;
 
@@ -165,7 +168,7 @@ public class memberstatus extends ListenerAdapter {
 	}
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String id = event.getComponentId();
 		if (!id.startsWith("memberstatus_"))
 			return;

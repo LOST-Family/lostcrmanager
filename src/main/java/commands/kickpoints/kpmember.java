@@ -8,6 +8,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Kickpoint;
@@ -26,8 +28,9 @@ import util.MessageUtil;
 
 public class kpmember extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("kpmember"))
 			return;
 		event.deferReply().queue();
@@ -140,8 +143,9 @@ public class kpmember extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("kpmember"))
 			return;
 
@@ -157,7 +161,7 @@ public class kpmember extends ListenerAdapter {
 	}
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String id = event.getComponentId();
 		if (!id.startsWith("kpmember_"))
 			return;
@@ -173,6 +177,7 @@ public class kpmember extends ListenerAdapter {
 
 		new Thread(new Runnable() {
 
+			@SuppressWarnings("null")
 			@Override
 			public void run() {
 

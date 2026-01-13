@@ -1,0 +1,251 @@
+package webserver.api;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import lostcrmanager.Bot;
+import datawrapper.Player;
+import datawrapper.User;
+import webserver.api.dto.PlayerDTO;
+import webserver.api.dto.UserDTO;
+import java.util.concurrent.Executors;
+
+import org.json.JSONObject;
+
+/**
+ * REST API Server (ported from lostmanager)
+ * Clan-specific endpoints removed.
+ */
+public class RestApiServer {
+
+    private HttpServer server;
+    private int port;
+    private ObjectMapper objectMapper;
+    private String apiToken;
+
+    public RestApiServer(int port) {
+        this.port = port;
+        this.objectMapper = new ObjectMapper();
+        this.apiToken = System.getenv("LOSTCRMANAGER_API_SECRET");
+
+        if (this.apiToken == null || this.apiToken.isEmpty()) {
+            System.err.println("WARNING: LOSTCRMANAGER_API_SECRET is not set. API endpoints will be accessible without authentication.");
+        }
+    }
+
+    public void start() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(port), 0);
+
+        // Register API endpoints (clan endpoints intentionally omitted)
+        server.createContext("/api/players/", new PlayerHandler());
+        server.createContext("/api/users/", new UserHandler());
+        server.createContext("/api/guild", new GuildHandler());
+
+        server.setExecutor(Executors.newFixedThreadPool(10));
+        server.start();
+
+        System.out.println("REST API Server started on port " + port);
+    }
+
+    public void stop() {
+        if (server != null) {
+            server.stop(0);
+            System.out.println("REST API Server stopped");
+        }
+    }
+
+    /**
+     * Handler for GET /api/players/{tag}
+     */
+    private class PlayerHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                addCorsHeaders(exchange);
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+                return;
+            }
+
+            // Validate API token
+            if (!validateApiToken(exchange)) {
+                sendResponse(exchange, 401, "{\"error\":\"Unauthorized - Invalid or missing API token\"}");
+                return;
+            }
+
+            try {
+                String path = exchange.getRequestURI().getPath();
+                String[] parts = path.split("/");
+
+                if (parts.length < 4) {
+                    sendResponse(exchange, 400, "{\"error\":\"Invalid path format. Expected /api/players/{tag}\"}");
+                    return;
+                }
+
+                String playerTag = parts[3];
+
+                Player player = new Player(playerTag);
+
+                if (!player.IsLinked()) {
+                    sendResponse(exchange, 404, "{\"error\":\"Player not found\"}");
+                    return;
+                }
+
+                PlayerDTO playerDTO = new PlayerDTO(player);
+                String json = objectMapper.writeValueAsString(playerDTO);
+                sendJsonResponse(exchange, 200, json);
+
+            } catch (Exception e) {
+                System.err.println("Error in PlayerHandler: " + e.getMessage());
+                e.printStackTrace();
+                sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+            }
+        }
+    }
+
+    /**
+     * Handler for GET /api/users/{userId}
+     */
+    private class UserHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                addCorsHeaders(exchange);
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+                return;
+            }
+
+            if (!validateApiToken(exchange)) {
+                sendResponse(exchange, 401, "{\"error\":\"Unauthorized - Invalid or missing API token\"}");
+                return;
+            }
+
+            try {
+                String path = exchange.getRequestURI().getPath();
+                String[] parts = path.split("/");
+
+                if (parts.length < 4) {
+                    sendResponse(exchange, 400, "{\"error\":\"Invalid path format. Expected /api/users/{userId}\"}");
+                    return;
+                }
+
+                String userId = parts[3];
+
+                User user = new User(userId);
+
+                java.util.ArrayList<Player> linkedPlayers = user.getAllLinkedAccounts();
+                if ((linkedPlayers == null || linkedPlayers.isEmpty()) && !user.isAdmin()) {
+                    sendResponse(exchange, 404, "{\"error\":\"User not found or has no linked accounts\"}");
+                    return;
+                }
+
+                UserDTO userDTO = new UserDTO(user);
+                String json = objectMapper.writeValueAsString(userDTO);
+                sendJsonResponse(exchange, 200, json);
+
+            } catch (Exception e) {
+                System.err.println("Error in UserHandler: " + e.getMessage());
+                e.printStackTrace();
+                sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+            }
+        }
+    }
+
+    private class GuildHandler implements HttpHandler {
+        @SuppressWarnings("null")
+		@Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                addCorsHeaders(exchange);
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            if (!"GET".equals(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+                return;
+            }
+
+            if (!validateApiToken(exchange)) {
+                sendResponse(exchange, 401, "{\"error\":\"Unauthorized - Invalid or missing API token\"}");
+                return;
+            }
+
+            try {
+                JSONObject object = new JSONObject();
+                object.put("membercount", Bot.getJda().getGuildById(Bot.guild_id).getMemberCount());
+                String json = object.toString();
+                sendJsonResponse(exchange, 200, json);
+
+            } catch (Exception e) {
+                System.err.println("Error in GuildHandler: " + e.getMessage());
+                e.printStackTrace();
+                sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+            }
+        }
+    }
+
+    private boolean validateApiToken(HttpExchange exchange) {
+        if (apiToken == null || apiToken.isEmpty()) {
+            return true;
+        }
+
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        if (authHeader != null) {
+            if (authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                return apiToken.equals(token);
+            } else {
+                return apiToken.equals(authHeader);
+            }
+        }
+
+        String apiTokenHeader = exchange.getRequestHeaders().getFirst("X-API-Token");
+        if (apiTokenHeader != null) {
+            return apiToken.equals(apiTokenHeader);
+        }
+
+        return false;
+    }
+
+    private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+        addCorsHeaders(exchange);
+        exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
+        exchange.sendResponseHeaders(statusCode, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
+    }
+
+    private void sendJsonResponse(HttpExchange exchange, int statusCode, String json) throws IOException {
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        addCorsHeaders(exchange);
+        exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
+        exchange.sendResponseHeaders(statusCode, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
+    }
+
+    private void addCorsHeaders(HttpExchange exchange) {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Token");
+    }
+}

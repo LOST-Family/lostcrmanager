@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import javax.annotation.Nonnull;
+
 import commands.kickpoints.kpadd;
 import datautil.DBManager;
 import datawrapper.Clan;
@@ -27,8 +29,9 @@ import util.MessageUtil;
 
 public class winsfails extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("winsfails"))
 			return;
 		event.deferReply().queue();
@@ -340,8 +343,9 @@ public class winsfails extends ListenerAdapter {
 		thread.start();
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("winsfails"))
 			return;
 

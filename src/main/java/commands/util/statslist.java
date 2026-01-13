@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Player;
@@ -27,7 +29,7 @@ public class statslist extends ListenerAdapter {
 			"Letzte Ranked-Liga", "Letzte UC-Trophies" };
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("statslist"))
 			return;
 		event.deferReply().queue();
@@ -380,6 +382,7 @@ public class statslist extends ListenerAdapter {
 		return content.toString();
 	}
 
+	@SuppressWarnings("null")
 	private String formatPlayerLine(Player p, List<String> displayFields) {
 		boolean isMarked = p.isMarked();
 
@@ -516,6 +519,7 @@ public class statslist extends ListenerAdapter {
 		return players.stream().sorted(comparator).collect(Collectors.toCollection(ArrayList::new));
 	}
 
+	@SuppressWarnings("null")
 	private ArrayList<Player> sortPlayersByFields(ArrayList<Player> players, List<String> sortFields) {
 		Comparator<Player> comparator = null;
 
@@ -609,8 +613,9 @@ public class statslist extends ListenerAdapter {
 		return clanTags;
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("statslist"))
 			return;
 

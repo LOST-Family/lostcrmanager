@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Player;
@@ -26,7 +28,7 @@ import util.MessageUtil;
 public class checkroles extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("checkroles"))
 			return;
 		event.deferReply().queue();
@@ -82,8 +84,9 @@ public class checkroles extends ListenerAdapter {
 		}, "CheckRolesCommand-" + event.getUser().getId()).start();
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("checkroles"))
 			return;
 
@@ -105,7 +108,7 @@ public class checkroles extends ListenerAdapter {
 	}
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String id = event.getComponentId();
 		if (!id.startsWith("checkroles_"))
 			return;
@@ -139,6 +142,7 @@ public class checkroles extends ListenerAdapter {
 		}, "CheckRolesRefresh-" + event.getUser().getId()).start();
 	}
 
+	@SuppressWarnings("null")
 	private void performRoleCheck(net.dv8tion.jda.api.interactions.InteractionHook hook, Guild guild, String title,
 			String clantag, boolean ignoreHiddenColeaders) {
 

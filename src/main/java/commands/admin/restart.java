@@ -1,5 +1,7 @@
 package commands.admin;
 
+import javax.annotation.Nonnull;
+
 import datawrapper.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -8,7 +10,7 @@ import util.MessageUtil;
 public class restart extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("restart"))
 			return;
 		event.deferReply().queue();

@@ -2,6 +2,8 @@ package commands.links;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Player;
@@ -16,7 +18,7 @@ import util.MessageUtil;
 public class unlink extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("unlink"))
 			return;
 		event.deferReply().queue();
@@ -68,8 +70,9 @@ public class unlink extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("unlink"))
 			return;
 

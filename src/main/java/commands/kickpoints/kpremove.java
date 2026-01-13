@@ -1,5 +1,7 @@
 package commands.kickpoints;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBUtil;
 import datawrapper.Player;
 import datawrapper.Kickpoint;
@@ -11,8 +13,9 @@ import util.MessageUtil;
 
 public class kpremove extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("kpremove"))
 			return;
 		event.deferReply().queue();

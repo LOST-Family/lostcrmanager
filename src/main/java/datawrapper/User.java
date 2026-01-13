@@ -2,7 +2,9 @@ package datawrapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
+import lostcrmanager.Bot;
 import datautil.DBManager;
 import datautil.DBUtil;
 
@@ -16,6 +18,7 @@ public class User {
 	private String userid;
 	private ArrayList<Player> linkedaccounts;
 	private Boolean isadmin;
+	private String nickname;
 
 	public User(String userid) {
 		this.userid = userid;
@@ -37,11 +40,25 @@ public class User {
 		if (isadmin == null) {
 			if (DBUtil.getValueFromSQL("SELECT is_admin FROM users WHERE discord_id = ?", Boolean.class,
 					userid) == null) {
-				DBUtil.executeUpdate("INSERT INTO users (discord_id, is_admin) VALUES (?, ?)", userid, false);
+				DBUtil.executeUpdate("INSERT INTO users (discord_id, name, is_admin) VALUES (?, ?, ?)", userid,
+						getNickname(), false);
 			}
 			isadmin = DBUtil.getValueFromSQL("SELECT is_admin FROM users WHERE discord_id = ?", Boolean.class, userid);
 		}
 		return isadmin;
+	}
+
+	@SuppressWarnings("null")
+	public String getNickname() {
+		if (nickname == null) {
+			try {
+				nickname = Bot.getJda().getGuildById(Bot.guild_id).retrieveMemberById(userid).submit().get()
+						.getEffectiveName();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+		return nickname;
 	}
 
 	public ArrayList<Player> getAllLinkedAccounts() {

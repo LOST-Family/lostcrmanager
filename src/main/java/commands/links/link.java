@@ -1,5 +1,7 @@
 package commands.links;
 
+import javax.annotation.Nonnull;
+
 import commands.wins.wins;
 import datautil.DBManager;
 import datautil.DBUtil;
@@ -12,8 +14,9 @@ import util.MessageUtil;
 
 public class link extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("link"))
 			return;
 		event.deferReply().queue();

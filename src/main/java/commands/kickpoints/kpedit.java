@@ -8,6 +8,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBUtil;
 import datawrapper.Clan;
 import datawrapper.Kickpoint;
@@ -25,8 +27,9 @@ import util.MessageUtil;
 
 public class kpedit extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("kpedit"))
 			return;
 		String title = "Kickpunkte";
@@ -79,8 +82,9 @@ public class kpedit extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onModalInteraction(ModalInteractionEvent event) {
+	public void onModalInteraction(@Nonnull ModalInteractionEvent event) {
 		if (event.getModalId().startsWith("kpedit")) {
 			event.deferReply().queue();
 			int id = Integer.valueOf(event.getModalId().split("_")[1]);

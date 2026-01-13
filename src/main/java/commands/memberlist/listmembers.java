@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Clan;
@@ -26,7 +28,7 @@ import util.MessageUtil;
 public class listmembers extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("listmembers"))
 			return;
 		event.deferReply().queue();
@@ -153,7 +155,7 @@ public class listmembers extends ListenerAdapter {
 	}
 
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("listmembers"))
 			return;
 
@@ -168,7 +170,7 @@ public class listmembers extends ListenerAdapter {
 	}
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String id = event.getComponentId();
 		if (!id.startsWith("listmembers_"))
 			return;

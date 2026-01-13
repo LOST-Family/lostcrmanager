@@ -71,6 +71,7 @@ public class DBManager {
 		return available;
 	}
 
+	@SuppressWarnings("null")
 	public static List<Command.Choice> getClansAutocomplete(String input) {
 		if (clans == null) {
 			cacheClans();
@@ -159,6 +160,7 @@ public class DBManager {
 		return choices;
 	}
 
+	@SuppressWarnings("null")
 	public static List<Command.Choice> getPlayerlistAutocomplete(String input, InClanType inclantype) {
 		if (players == null) {
 			cachePlayers();
@@ -305,6 +307,7 @@ public class DBManager {
 		return choices;
 	}
 
+	@SuppressWarnings("null")
 	public static List<Command.Choice> getPlayerlistAutocompleteAllLostClans(String input) {
 		List<Command.Choice> choices = new ArrayList<>();
 

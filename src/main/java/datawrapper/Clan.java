@@ -23,11 +23,14 @@ public class Clan {
 
 	private String clan_tag;
 	private String namedb;
+	private String descriptiondb;
+	private String descriptionapi;
 	private String nameapi;
 	private ArrayList<Player> playerlistdb;
 	private ArrayList<Player> playerlistapi;
 	private ArrayList<Player> cwfameplayerlist;
 	private Long max_kickpoints;
+	private Long index;
 	private Integer kickpoints_expire_after_days;
 	private ArrayList<KickpointReason> kickpoint_reasons;
 
@@ -86,6 +89,23 @@ public class Clan {
 
 	public String getTag() {
 		return clan_tag;
+	}
+
+	public Long getIndex() {
+		if (index == null) {
+			String sql = "SELECT index FROM clans WHERE tag = ?";
+			try (PreparedStatement pstmt = Connection.getConnection().prepareStatement(sql)) {
+				pstmt.setString(1, clan_tag);
+				try (ResultSet rs = pstmt.executeQuery()) {
+					if (rs.next()) {
+						index = rs.getLong("index");
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return index;
 	}
 
 	public ArrayList<Player> getPlayersDB() {
@@ -241,5 +261,32 @@ public class Clan {
 			}
 		}
 		return cwfameplayerlist;
+	}
+
+	public String getDescriptionDB() {
+		if (descriptiondb == null) {
+			String sql = "SELECT description FROM clans WHERE tag = ?";
+			try (PreparedStatement pstmt = Connection.getConnection().prepareStatement(sql)) {
+				pstmt.setString(1, clan_tag);
+				try (ResultSet rs = pstmt.executeQuery()) {
+					if (rs.next()) {
+						descriptiondb = rs.getString("description");
+					}
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return descriptiondb;
+	}
+
+	public String getDescriptionAPI() {
+		if (descriptionapi == null) {
+			JSONObject jsonobject = new JSONObject(APIUtil.getClanJson(clan_tag));
+			if (jsonobject.has("description") && !jsonobject.isNull("description")) {
+				descriptionapi = jsonobject.getString("description");
+			}
+		}
+		return descriptionapi;
 	}
 }

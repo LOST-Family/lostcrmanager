@@ -2,6 +2,8 @@ package commands.kickpoints;
 
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Clan;
@@ -21,8 +23,9 @@ import util.MessageUtil;
 
 public class clanconfig extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("clanconfig"))
 			return;
 		String title = "Clanconfig";
@@ -88,8 +91,9 @@ public class clanconfig extends ListenerAdapter {
 
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onModalInteraction(ModalInteractionEvent event) {
+	public void onModalInteraction(@Nonnull ModalInteractionEvent event) {
 		if (event.getModalId().startsWith("clanconfig")) {
 			event.deferReply().queue();
 			String title = "Clanconfig";
@@ -132,8 +136,9 @@ public class clanconfig extends ListenerAdapter {
 		}
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("clanconfig"))
 			return;
 

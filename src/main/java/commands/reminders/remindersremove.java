@@ -4,6 +4,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.annotation.Nonnull;
+
 import datautil.Connection;
 import datautil.DBUtil;
 import datawrapper.Clan;
@@ -17,7 +19,7 @@ import util.MessageUtil;
 public class remindersremove extends ListenerAdapter {
 
 	@Override
-	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("remindersremove"))
 			return;
 		event.deferReply().queue();
