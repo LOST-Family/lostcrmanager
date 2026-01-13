@@ -1,4 +1,6 @@
 {
+  "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-23",
+  "java.home": "C:\\Program Files\\Java\\jdk-23",
   "java.configuration.runtimes": [
     {
       "name": "JavaSE-23",
@@ -6,6 +8,8 @@
       "default": true
     }
   ],
-  "java.home": "C:\\Program Files\\Java\\jdk-23",
+  "java.import.maven.enabled": true,
+  "java.project.importOnStart": "automatic",
+  "java.configuration.updateBuildConfiguration": "interactive",
   "maven.executable.path": "C:\\Tools\\apache-maven-3.9.4\\bin\\mvn.cmd"
 }

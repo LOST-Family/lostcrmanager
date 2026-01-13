@@ -34,6 +34,11 @@ public class PlayerDTO {
     @JsonProperty("activeKickpoints")
     private List<KickpointDTO> activeKickpoints;
 
+    @JsonProperty("monthlyWins")
+    private Integer monthlyWins;
+
+    @JsonProperty("monthlyWinsHasWarning")
+    private Boolean monthlyWinsHasWarning;
     public PlayerDTO() {}
 
     public PlayerDTO(Player player) {
@@ -61,6 +66,16 @@ public class PlayerDTO {
                 for (Kickpoint kp : kickpoints) { this.activeKickpoints.add(new KickpointDTO(kp)); }
             }
         } catch (Exception e) { this.activeKickpoints = null; }
+
+        try {
+            Player.WinsData wd = player.getCurrentMonthWins();
+            this.monthlyWins = wd != null ? wd.wins : null;
+        } catch (Exception e) { this.monthlyWins = null; }
+
+        try {
+            Player.WinsData wd2 = player.getCurrentMonthWins();
+            this.monthlyWinsHasWarning = wd2 != null ? wd2.hasWarning : null;
+        } catch (Exception e) { this.monthlyWinsHasWarning = null; }
     }
 
     // Getters and setters
@@ -80,4 +95,8 @@ public class PlayerDTO {
     public void setTotalKickpoints(Long totalKickpoints) { this.totalKickpoints = totalKickpoints; }
     public List<KickpointDTO> getActiveKickpoints() { return activeKickpoints; }
     public void setActiveKickpoints(List<KickpointDTO> activeKickpoints) { this.activeKickpoints = activeKickpoints; }
+    public Integer getMonthlyWins() { return monthlyWins; }
+    public void setMonthlyWins(Integer monthlyWins) { this.monthlyWins = monthlyWins; }
+    public Boolean getMonthlyWinsHasWarning() { return monthlyWinsHasWarning; }
+    public void setMonthlyWinsHasWarning(Boolean monthlyWinsHasWarning) { this.monthlyWinsHasWarning = monthlyWinsHasWarning; }
 }

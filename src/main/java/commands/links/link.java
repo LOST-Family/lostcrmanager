@@ -74,7 +74,6 @@ public class link extends ListenerAdapter {
 				try {
 					playername = p.getNameAPI();
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				if (!p.IsLinked()) {
