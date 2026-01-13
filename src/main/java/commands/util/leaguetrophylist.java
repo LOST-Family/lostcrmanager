@@ -391,6 +391,8 @@ public class leaguetrophylist extends ListenerAdapter {
 				e.printStackTrace();
 			} catch (ExecutionException e) {
 				e.printStackTrace();
+			} catch (Exception e) {
+				// Member nicht gefunden
 			}
 			if (member != null) {
 				String nick = member.getEffectiveName();
