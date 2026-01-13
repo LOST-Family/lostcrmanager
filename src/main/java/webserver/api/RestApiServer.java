@@ -45,6 +45,8 @@ public class RestApiServer {
 		server = HttpServer.create(new InetSocketAddress(port), 0);
 
 		// Register API endpoints
+		// More specific paths should be registered before more general ones
+		server.createContext("/api/clans/", new ClanSpecificHandler());
 		server.createContext("/api/clans", new ClansHandler());
 		server.createContext("/api/players/", new PlayerHandler());
 		server.createContext("/api/users/", new UserHandler());
@@ -215,6 +217,95 @@ public class RestApiServer {
 		exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
 		exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, OPTIONS");
 		exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Token");
+	}
+
+	/**
+	 * Handler for clan-specific endpoints:
+	 * - GET /api/clans/{tag} - clan info
+	 * - GET /api/clans/{tag}/members - clan members (DB only)
+	 */
+	private class ClanSpecificHandler implements HttpHandler {
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			if ("OPTIONS".equals(exchange.getRequestMethod())) {
+				addCorsHeaders(exchange);
+				exchange.sendResponseHeaders(204, -1);
+				return;
+			}
+
+			if (!"GET".equals(exchange.getRequestMethod())) {
+				sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+				return;
+			}
+
+			// Validate API token
+			if (!validateApiToken(exchange)) {
+				sendResponse(exchange, 401, "{\"error\":\"Unauthorized - Invalid or missing API token\"}");
+				return;
+			}
+
+			try {
+				String path = exchange.getRequestURI().getPath();
+				String[] parts = path.split("/");
+
+				if (parts.length < 4) {
+					sendResponse(exchange, 400, "{\"error\":\"Invalid path format\"}");
+					return;
+				}
+
+				String clanTag = parts[3];
+
+				// Validate clan exists (DB only)
+				Clan clan = new Clan(clanTag);
+				if (!clan.ExistsDB()) {
+					sendResponse(exchange, 404, "{\"error\":\"Clan not found\"}");
+					return;
+				}
+
+				// Route based on sub-path
+				if (parts.length >= 5) {
+					String subPath = parts[4];
+					if ("members".equals(subPath)) {
+						handleClanMembers(exchange, clan);
+						return;
+					} else {
+						sendResponse(exchange, 404, "{\"error\":\"Unknown endpoint\"}");
+						return;
+					}
+				} else {
+					// Return clan info (DB only)
+					ClanDTO clanDTO = new ClanDTO(clan);
+					String json = objectMapper.writeValueAsString(clanDTO);
+					sendJsonResponse(exchange, 200, json);
+				}
+
+			} catch (Exception e) {
+				System.err.println("Error in ClanSpecificHandler: " + e.getMessage());
+				e.printStackTrace();
+				sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+			}
+		}
+
+		private void handleClanMembers(HttpExchange exchange, Clan clan) throws Exception {
+			ArrayList<Player> members = clan.getPlayersDB();
+
+			if (members == null) {
+				sendJsonResponse(exchange, 200, "[]");
+				return;
+			}
+
+			List<PlayerDTO> playerDTOs = new ArrayList<>();
+			for (Player player : members) {
+				try {
+					playerDTOs.add(new PlayerDTO(player));
+				} catch (Exception e) {
+					System.err.println("Error processing player " + player.getTag() + ": " + e.getMessage());
+				}
+			}
+
+			String json = objectMapper.writeValueAsString(playerDTOs);
+			sendJsonResponse(exchange, 200, json);
+		}
 	}
 
 	/**
