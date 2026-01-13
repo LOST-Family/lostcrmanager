@@ -58,6 +58,7 @@ import datautil.DBUtil;
 import datawrapper.Clan;
 import datawrapper.Player;
 import webserver.LinkWebServer;
+import webserver.api.RestApiServer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -79,6 +80,7 @@ public class Bot extends ListenerAdapter {
 	private static final int MIN_LEVEL_FOR_PING = 45;
 
 	private static JDA jda;
+	private static RestApiServer restApiServer;
 	public static String VERSION;
 	public static String guild_id;
 	public static String api_key;
@@ -108,10 +110,25 @@ public class Bot extends ListenerAdapter {
 		datautil.Connection.tablesExists();
 		datautil.Connection.migrateRemindersTable();
 		datautil.Connection.migrateClanMembersTable();
-		
-		// Start REST API server
+
+		// Start REST API servers
 		LinkWebServer.start();
-		
+		// Start generic REST API (clan/player endpoints) similar to lostmanager
+		int restPort = 8070;
+		try {
+			restPort = Integer.parseInt(System.getenv().getOrDefault("REST_API_PORT", "8060"));
+		} catch (NumberFormatException e) {
+			System.err.println("Invalid REST_API_PORT, using default 8060");
+		}
+		try {
+			restApiServer = new RestApiServer(restPort);
+			restApiServer.start();
+			System.out.println("RestApiServer started on port " + restPort);
+		} catch (Exception e) {
+			System.err.println("Failed to start RestApiServer: " + e.getMessage());
+			e.printStackTrace();
+		}
+
 		startNameUpdates();
 		startLoadingLists();
 		startReminders();
@@ -265,23 +282,23 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, für welchen Reminder angezeigt werden sollen.", true)
 									.setAutoComplete(true)),
-					Commands.slash("wins", "Zeige die Wins-Statistik für einen Spieler oder Clan in einem bestimmten Monat.")
+					Commands.slash("wins",
+							"Zeige die Wins-Statistik für einen Spieler oder Clan in einem bestimmten Monat.")
 							.addOptions(new OptionData(OptionType.STRING, "month",
-									"Der Monat, für den die Wins angezeigt werden sollen.", true)
-									.setAutoComplete(true))
+									"Der Monat, für den die Wins angezeigt werden sollen.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "player",
-									"Der Spieler, für den die Wins angezeigt werden sollen.")
-									.setAutoComplete(true).setRequired(false))
+									"Der Spieler, für den die Wins angezeigt werden sollen.").setAutoComplete(true)
+									.setRequired(false))
 							.addOptions(new OptionData(OptionType.STRING, "clan",
-									"Der Clan, für den die Wins angezeigt werden sollen.")
-									.setAutoComplete(true).setRequired(false))
+									"Der Clan, für den die Wins angezeigt werden sollen.").setAutoComplete(true)
+									.setRequired(false))
 							.addOptions(new OptionData(OptionType.STRING, "exclude_leaders",
 									"(Optional) Wenn 'true', werden Leader, Co-Leader und Admins von der Liste ausgeschlossen")
 									.setAutoComplete(true).setRequired(false)),
-					Commands.slash("statslist", "Erstelle eine konfigurierbare Stats-Liste für einen oder mehrere Clans.")
+					Commands.slash("statslist",
+							"Erstelle eine konfigurierbare Stats-Liste für einen oder mehrere Clans.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
-									"Clan(s) kommagetrennt, z.B. #CLANTAG1,#CLANTAG2", true)
-									.setAutoComplete(true))
+									"Clan(s) kommagetrennt, z.B. #CLANTAG1,#CLANTAG2", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "display_fields",
 									"Anzuzeigende Felder (kommagetrennt, z.B. Wins,Trophies,PoLLeagueNumber)", true)
 									.setAutoComplete(true))
@@ -291,8 +308,7 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "roles_sorting",
 									"(Optional) 'true' für Rollen-Sortierung, 'clans' für Clans+Rollen-Sortierung")
 									.setAutoComplete(true).setRequired(false)),
-					Commands.slash("checkroles",
-							"Überprüfe, ob Clan-Mitglieder die korrekten Discord-Rollen haben.")
+					Commands.slash("checkroles", "Überprüfe, ob Clan-Mitglieder die korrekten Discord-Rollen haben.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, welcher überprüft werden soll.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "ignore_hiddencoleaders",
@@ -303,8 +319,7 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, welcher überprüft werden soll.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "month",
-									"Der Monat, für den die Wins überprüft werden sollen.", true)
-									.setAutoComplete(true))
+									"Der Monat, für den die Wins überprüft werden sollen.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "threshold",
 									"Die Hürde, welche jeder Spieler überwunden haben sollte", true))
 							.addOptions(new OptionData(OptionType.STRING, "kpreason",
@@ -329,6 +344,13 @@ public class Bot extends ListenerAdapter {
 	@Override
 	public void onShutdown(@Nonnull ShutdownEvent event) {
 		LinkWebServer.stop();
+		if (restApiServer != null) {
+			try {
+				restApiServer.stop();
+			} catch (Exception e) {
+				System.err.println("Error stopping RestApiServer: " + e.getMessage());
+			}
+		}
 		stopScheduler();
 	}
 
@@ -383,6 +405,22 @@ public class Bot extends ListenerAdapter {
 		System.out.println("Alle 2h werden nun die Namen aktualisiert. " + System.currentTimeMillis());
 		Runnable task = () -> {
 			Thread thread = new Thread(() -> {
+
+				// Update clan badges and descriptions
+				String clanSql = "SELECT tag FROM clans";
+				for (String clanTag : DBUtil.getArrayListFromSQL(clanSql, String.class)) {
+					if (clanTag.equals("warteliste")) {
+						continue;
+					}
+					try {
+						Clan clan = new Clan(clanTag);
+						String description = clan.getDescriptionAPI();
+						DBUtil.executeUpdate("UPDATE clans SET description = ? WHERE tag = ?", description, clanTag);
+					} catch (Exception e) {
+						System.out.println(
+								"Fehler beim Badge/Description Update von Clan " + clanTag + ": " + e.getMessage());
+					}
+				}
 
 				String sql = "SELECT cr_tag FROM players";
 				for (String tag : DBUtil.getArrayListFromSQL(sql, String.class)) {
@@ -502,7 +540,7 @@ public class Bot extends ListenerAdapter {
 
 			JSONObject data = new JSONObject(json);
 			JSONObject clanData = data.getJSONObject("clan");
-			if(clanData.has("finishTime")) {
+			if (clanData.has("finishTime")) {
 				System.out.println("Der Clan War für " + clantag + " ist bereits beendet.");
 				updateLastSentDate(reminderId);
 				return;
@@ -686,7 +724,8 @@ public class Bot extends ListenerAdapter {
 					if (rs.next()) {
 						int count = rs.getInt("cnt");
 						if (count > 0) {
-							System.out.println("Wins für diesen Monat bereits gespeichert (" + count + " Einträge). Überspringe.");
+							System.out.println(
+									"Wins für diesen Monat bereits gespeichert (" + count + " Einträge). Überspringe.");
 							return;
 						}
 					}

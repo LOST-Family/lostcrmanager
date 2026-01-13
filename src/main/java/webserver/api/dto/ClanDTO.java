@@ -26,9 +26,6 @@ public class ClanDTO {
     @JsonProperty("maxKickpoints")
     private Long maxKickpoints;
 
-    @JsonProperty("minSeasonWins")
-    private Long minSeasonWins;
-
     @JsonProperty("kickpointsExpireAfterDays")
     private Integer kickpointsExpireAfterDays;
 

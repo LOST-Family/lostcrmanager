@@ -33,7 +33,7 @@ public class RestApiServer {
 	public RestApiServer(int port) {
 		this.port = port;
 		this.objectMapper = new ObjectMapper();
-		this.apiToken = System.getenv("LOSTCRMANAGER_API_SECRET");
+		this.apiToken = System.getenv("REST_API_TOKEN");
 
 		if (this.apiToken == null || this.apiToken.isEmpty()) {
 			System.err.println(
