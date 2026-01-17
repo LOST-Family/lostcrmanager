@@ -110,9 +110,7 @@ public class RestApiServer {
 				sendJsonResponse(exchange, 200, json);
 
 			} catch (Exception e) {
-				System.err.println("Error in PlayerHandler: " + e.getMessage());
-				e.printStackTrace();
-				sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+				handleException(exchange, "PlayerHandler", e);
 			}
 		}
 	}
@@ -163,9 +161,33 @@ public class RestApiServer {
 				sendJsonResponse(exchange, 200, json);
 
 			} catch (Exception e) {
-				System.err.println("Error in UserHandler: " + e.getMessage());
-				e.printStackTrace();
+				handleException(exchange, "UserHandler", e);
+			}
+		}
+	}
+
+	/**
+	 * Handle exceptions from handlers, suppressing connection reset errors
+	 */
+	private void handleException(HttpExchange exchange, String handlerName, Exception e) {
+		boolean isClientDisconnect = false;
+		if (e instanceof IOException) {
+			String msg = e.getMessage();
+			if (msg != null && (msg.contains("Connection reset") || msg.contains("Broken pipe")
+					|| msg.contains("insufficient bytes written"))) {
+				isClientDisconnect = true;
+			}
+		}
+
+		if (isClientDisconnect) {
+			System.out.println("Client disconnected in " + handlerName + ": " + e.getMessage());
+		} else {
+			System.err.println("Error in " + handlerName + ": " + e.getMessage());
+			e.printStackTrace();
+			try {
 				sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+			} catch (IOException ignore) {
+				// Failed to send error response
 			}
 		}
 	}
@@ -280,9 +302,7 @@ public class RestApiServer {
 				}
 
 			} catch (Exception e) {
-				System.err.println("Error in ClanSpecificHandler: " + e.getMessage());
-				e.printStackTrace();
-				sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+				handleException(exchange, "ClanSpecificHandler", e);
 			}
 		}
 
@@ -350,9 +370,7 @@ public class RestApiServer {
 				sendJsonResponse(exchange, 200, json);
 
 			} catch (Exception e) {
-				System.err.println("Error in ClansHandler: " + e.getMessage());
-				e.printStackTrace();
-				sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
+				handleException(exchange, "ClansHandler", e);
 			}
 		}
 	}

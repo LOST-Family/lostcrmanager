@@ -12,6 +12,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -433,6 +434,8 @@ public class Bot extends ListenerAdapter {
 								getJda().getGuildById(guild_id).retrieveMemberById(id).submit().get()
 										.getEffectiveName(),
 								id);
+					} catch (ExecutionException e) {
+						// member not on guild, ignore
 					} catch (Exception e) {
 						System.out.println("Fehler beim Namenupdate von Tag " + id);
 					}
