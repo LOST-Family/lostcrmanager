@@ -385,11 +385,18 @@ public class leaguetrophylist extends ListenerAdapter {
 			String discordID = p.getUser().getUserID();
 			Member member = null;
 			try {
-				member = Bot.getJda().getGuildById(Bot.guild_id)
-						.retrieveMember(Bot.getJda().retrieveUserById(discordID).submit().get()).submit().get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+				member = Bot.getJda().getGuildById(Bot.guild_id).retrieveMemberById(discordID).submit().get();
 			} catch (ExecutionException e) {
+				if (e.getCause() instanceof net.dv8tion.jda.api.exceptions.ErrorResponseException) {
+					net.dv8tion.jda.api.exceptions.ErrorResponseException ex = (net.dv8tion.jda.api.exceptions.ErrorResponseException) e
+							.getCause();
+					if (ex.getErrorCode() != 10007 && ex.getErrorCode() != 10013) {
+						e.printStackTrace();
+					}
+				} else {
+					e.printStackTrace();
+				}
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (Exception e) {
 				// Member nicht gefunden
