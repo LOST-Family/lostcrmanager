@@ -91,6 +91,7 @@ public class Bot extends ListenerAdapter {
 	public static String seasonstringfallback;
 
 	public static void main(String[] args) throws Exception {
+		util.DiscordLogger.setup();
 		VERSION = "1.2.5";
 		guild_id = System.getenv("CR_MANAGER_GUILD_ID");
 		api_key = System.getenv("CR_MANAGER_API_KEY");
@@ -338,6 +339,7 @@ public class Bot extends ListenerAdapter {
 	@Override
 	public void onReady(@Nonnull ReadyEvent event) {
 		setJda(event.getJDA());
+		util.DiscordLogger.setJda(event.getJDA());
 		registerCommands(event.getJDA(), guild_id);
 	}
 
@@ -502,22 +504,22 @@ public class Bot extends ListenerAdapter {
 		}
 		String normalized = weekdayString.toLowerCase();
 		switch (normalized) {
-		case "monday":
-			return dayOfWeek == DayOfWeek.MONDAY;
-		case "tuesday":
-			return dayOfWeek == DayOfWeek.TUESDAY;
-		case "wednesday":
-			return dayOfWeek == DayOfWeek.WEDNESDAY;
-		case "thursday":
-			return dayOfWeek == DayOfWeek.THURSDAY;
-		case "friday":
-			return dayOfWeek == DayOfWeek.FRIDAY;
-		case "saturday":
-			return dayOfWeek == DayOfWeek.SATURDAY;
-		case "sunday":
-			return dayOfWeek == DayOfWeek.SUNDAY;
-		default:
-			return false;
+			case "monday":
+				return dayOfWeek == DayOfWeek.MONDAY;
+			case "tuesday":
+				return dayOfWeek == DayOfWeek.TUESDAY;
+			case "wednesday":
+				return dayOfWeek == DayOfWeek.WEDNESDAY;
+			case "thursday":
+				return dayOfWeek == DayOfWeek.THURSDAY;
+			case "friday":
+				return dayOfWeek == DayOfWeek.FRIDAY;
+			case "saturday":
+				return dayOfWeek == DayOfWeek.SATURDAY;
+			case "sunday":
+				return dayOfWeek == DayOfWeek.SUNDAY;
+			default:
+				return false;
 		}
 	}
 
