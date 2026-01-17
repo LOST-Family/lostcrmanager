@@ -242,7 +242,11 @@ public class playerinfo extends ListenerAdapter {
 				} else {
 					desc += "Verlinkte Accounts: \n";
 					for (Player p : linkedaccs) {
-						desc += "   \\- " + MessageUtil.unformat(p.getInfoStringDB()) + "\n";
+						desc += "   \\- " + MessageUtil.unformat(p.getInfoStringDB());
+						if(p.isMarked()) {
+							desc += " (✗)";
+						}
+						desc += "\n";
 					}
 				}
 			}
