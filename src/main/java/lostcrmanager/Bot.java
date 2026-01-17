@@ -403,6 +403,7 @@ public class Bot extends ListenerAdapter {
 		scheduler.scheduleAtFixedRate(task, 0, 1, TimeUnit.HOURS);
 	}
 
+	@SuppressWarnings("null")
 	public static void startNameUpdates() {
 		System.out.println("Alle 2h werden nun die Namen aktualisiert. " + System.currentTimeMillis());
 		Runnable task = () -> {
@@ -421,6 +422,19 @@ public class Bot extends ListenerAdapter {
 					} catch (Exception e) {
 						System.out.println(
 								"Fehler beim Badge/Description Update von Clan " + clanTag + ": " + e.getMessage());
+					}
+				}
+
+				// Update User names
+				String usersql = "SELECT discord_id FROM users";
+				for (String id : DBUtil.getArrayListFromSQL(usersql, String.class)) {
+					try {
+						DBUtil.executeUpdate("UPDATE users SET name = ? WHERE discord_id = ?",
+								getJda().getGuildById(guild_id).retrieveMemberById(id).submit().get()
+										.getEffectiveName(),
+								id);
+					} catch (Exception e) {
+						System.out.println("Fehler beim Namenupdate von Tag " + id);
 					}
 				}
 
