@@ -8,7 +8,6 @@
       "args": ["-f", "${workspaceFolder}\\pom.xml", "clean", "package"],
       "group": { "kind": "build", "isDefault": true },
       "presentation": { "reveal": "always" },
-      "problemMatcher": ["$maven"]
     },
     {
       "label": "Maven Wrapper: compile (skip tests)",
@@ -17,7 +16,6 @@
       "args": ["-f", "${workspaceFolder}\\pom.xml", "-DskipTests=true", "compile"],
       "group": "none",
       "presentation": { "reveal": "always" },
-      "problemMatcher": ["$maven"]
     }
   ]
 }
