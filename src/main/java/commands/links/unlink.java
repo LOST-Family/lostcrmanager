@@ -1,5 +1,6 @@
 package commands.links;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -17,6 +18,7 @@ import util.MessageUtil;
 
 public class unlink extends ListenerAdapter {
 
+	@SuppressWarnings("null")
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("unlink"))
@@ -36,9 +38,10 @@ public class unlink extends ListenerAdapter {
 		}
 		if (b == false) {
 			event.getHook()
-			.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-					"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
-					MessageUtil.EmbedType.ERROR)).queue();
+					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+							"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+							MessageUtil.EmbedType.ERROR))
+					.queue();
 			return;
 		}
 
@@ -51,20 +54,50 @@ public class unlink extends ListenerAdapter {
 			return;
 		}
 
-		String tag = tagOption.getAsString();
+		String tagoption = tagOption.getAsString();
+
+		ArrayList<String> taglist = new ArrayList<>();
+
+		if (tagoption.contains(",")) {
+			String[] tags = tagoption.split(",");
+			for (String t : tags) {
+				taglist.add(t.trim());
+			}
+		} else {
+			taglist.add(tagoption);
+		}
 
 		new Thread(() -> {
-			Player p = new Player(tag);
+			boolean firstTime = true;
+			for (String tag : taglist) {
+				Player p = new Player(tag);
 
-			if (p.IsLinked()) {
-				DBUtil.executeUpdate("DELETE FROM players WHERE cr_tag = ?", tag);
-				String desc = "Die Verknüpfung des Spielers mit dem Tag " + tag + " wurde erfolgreich gelöscht.";
-				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
-						.queue();
-			} else {
-				String desc = "Der Spieler mit dem Tag " + tag + " ist bereits nicht mehr verknüpft.";
-				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.ERROR))
-						.queue();
+				if (p.IsLinked()) {
+					DBUtil.executeUpdate("DELETE FROM players WHERE cr_tag = ?", tag);
+					String desc = "Die Verknüpfung des Spielers mit dem Tag " + tag + " wurde erfolgreich gelöscht.";
+					if (firstTime) {
+						event.getHook()
+								.editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel()
+								.sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
+								.queue();
+					}
+				} else {
+					String desc = "Der Spieler mit dem Tag " + tag + " ist bereits nicht mehr verknüpft.";
+					if (firstTime) {
+						event.getHook()
+								.editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel()
+								.sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+				}
 			}
 		}).start();
 

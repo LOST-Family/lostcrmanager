@@ -199,7 +199,7 @@ public class Player {
 		}
 		return null;
 	}
-	
+
 	public String getInfoStringAPI() {
 		try {
 			return getNameAPI() + " (" + tag + ")";
@@ -309,7 +309,8 @@ public class Player {
 						if (rs.next()) {
 							String rolestring = rs.getString("clan_role");
 							role = rolestring.equals("leader") ? RoleType.LEADER
-									: rolestring.equals("coleader") || rolestring.equals("hiddencoleader") ? RoleType.COLEADER
+									: rolestring.equals("coleader") || rolestring.equals("hiddencoleader")
+											? RoleType.COLEADER
 											: rolestring.equals("elder") ? RoleType.ELDER
 													: rolestring.equals("member") ? RoleType.MEMBER : null;
 						}
@@ -447,7 +448,7 @@ public class Player {
 				}
 			}
 		}
-		return mark;
+		return mark == null ? false : mark;
 	}
 
 	public String getNote() {
@@ -555,16 +556,16 @@ public class Player {
 	/**
 	 * Calculate monthly wins for a specific month and year
 	 * 
-	 * @param year           The year
-	 * @param month          The month (1-12)
-	 * @param isCurrentMonth Whether this is the current month
-	 * @param startOfMonth   Start of the month
+	 * @param year             The year
+	 * @param month            The month (1-12)
+	 * @param isCurrentMonth   Whether this is the current month
+	 * @param startOfMonth     Start of the month
 	 * @param startOfNextMonth Start of the next month
-	 * @param zone           Time zone
+	 * @param zone             Time zone
 	 * @return WinsData containing wins count and warning flag
 	 */
-	public WinsData getMonthlyWins(int year, int month, boolean isCurrentMonth, 
-			java.time.ZonedDateTime startOfMonth, java.time.ZonedDateTime startOfNextMonth, 
+	public WinsData getMonthlyWins(int year, int month, boolean isCurrentMonth,
+			java.time.ZonedDateTime startOfMonth, java.time.ZonedDateTime startOfNextMonth,
 			java.time.ZoneId zone) {
 
 		// Check if any data exists for this player, if not save current data first
@@ -667,7 +668,7 @@ public class Player {
 	/**
 	 * Check if a recorded time is at the start of a month
 	 * 
-	 * @param recordedAt The recorded time
+	 * @param recordedAt    The recorded time
 	 * @param expectedStart The expected start of month
 	 * @return true if recorded time is on the first day of the month
 	 */

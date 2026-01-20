@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -414,8 +413,8 @@ public class statslist extends ListenerAdapter {
 						.retrieveMember(Bot.getJda().retrieveUserById(discordID).submit().get()).submit().get();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				// Member not found
 			}
 			if (member != null) {
 				String nick = member.getEffectiveName();
@@ -447,49 +446,49 @@ public class statslist extends ListenerAdapter {
 
 	private Object getFieldValue(Player p, String field) {
 		switch (field) {
-		case "Wins":
-			Player.WinsData winsResult = p.getCurrentMonthWins();
-			String winsDisplay = String.valueOf(winsResult.wins);
-			if (winsResult.hasWarning) {
-				winsDisplay += " ⚠️";
-			}
-			return winsDisplay;
-		case "Trophies":
-			Integer trophies = p.getTrophies();
-			return trophies != null ? trophies : 0;
-		case "UC-Trophies":
-			Integer polTrophies = p.getPoLTrophies();
-			return polTrophies != null ? polTrophies : 0;
-		case "Ranked-Liga":
-			Integer leagueNumber = p.getPoLLeagueNumber();
-			return leagueNumber != null ? leagueNumber : 0;
-		case "Letzte Ranked-Liga":
-			Integer lastLeagueNumber = p.getLastPathOfLegendLeagueNumber();
-			return lastLeagueNumber != null ? lastLeagueNumber : 0;
-		case "Letzte UC-Trophies":
-			Integer lastLeagueTrophies = p.getLastPathOfLegendTrophies();
-			return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
-		default:
-			return "N/A";
+			case "Wins":
+				Player.WinsData winsResult = p.getCurrentMonthWins();
+				String winsDisplay = String.valueOf(winsResult.wins);
+				if (winsResult.hasWarning) {
+					winsDisplay += " ⚠️";
+				}
+				return winsDisplay;
+			case "Trophies":
+				Integer trophies = p.getTrophies();
+				return trophies != null ? trophies : 0;
+			case "UC-Trophies":
+				Integer polTrophies = p.getPoLTrophies();
+				return polTrophies != null ? polTrophies : 0;
+			case "Ranked-Liga":
+				Integer leagueNumber = p.getPoLLeagueNumber();
+				return leagueNumber != null ? leagueNumber : 0;
+			case "Letzte Ranked-Liga":
+				Integer lastLeagueNumber = p.getLastPathOfLegendLeagueNumber();
+				return lastLeagueNumber != null ? lastLeagueNumber : 0;
+			case "Letzte UC-Trophies":
+				Integer lastLeagueTrophies = p.getLastPathOfLegendTrophies();
+				return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
+			default:
+				return "N/A";
 		}
 	}
 
 	private String getFieldDisplayName(String field) {
 		switch (field) {
-		case "Wins":
-			return "Wins (Monat)";
-		case "Trophies":
-			return "Trophäen";
-		case "UC-Trophies":
-			return "UC-Trophäen";
-		case "Ranked-Liga":
-			return "Ranked-Liga";
-		case "Letzte Ranked-Liga":
-			return "Letzte Ranked-Liga";
-		case "Letzte UC-Trophies":
-			return "Letzte UC-Trophies";
-		default:
-			return field;
+			case "Wins":
+				return "Wins (Monat)";
+			case "Trophies":
+				return "Trophäen";
+			case "UC-Trophies":
+				return "UC-Trophäen";
+			case "Ranked-Liga":
+				return "Ranked-Liga";
+			case "Letzte Ranked-Liga":
+				return "Letzte Ranked-Liga";
+			case "Letzte UC-Trophies":
+				return "Letzte UC-Trophies";
+			default:
+				return field;
 		}
 	}
 
@@ -543,35 +542,35 @@ public class statslist extends ListenerAdapter {
 
 	private Comparator<Player> getFieldComparator(String field) {
 		switch (field) {
-		case "Wins":
-			return Comparator.comparingInt((Player p) -> p.getCurrentMonthWins().wins);
-		case "Trophies":
-			return Comparator.comparingInt((Player p) -> {
-				Integer trophies = p.getTrophies();
-				return trophies != null ? trophies : 0;
-			});
-		case "UC-Trophies":
-			return Comparator.comparingInt((Player p) -> {
-				Integer polTrophies = p.getPoLTrophies();
-				return polTrophies != null ? polTrophies : 0;
-			});
-		case "Ranked-Liga":
-			return Comparator.comparingInt((Player p) -> {
-				Integer leagueNumber = p.getPoLLeagueNumber();
-				return leagueNumber != null ? leagueNumber : 0;
-			});
-		case "Letzte Ranked-Liga":
-			return Comparator.comparingInt((Player p) -> {
-				Integer lastLeagueNumber = p.getLastPathOfLegendLeagueNumber();
-				return lastLeagueNumber != null ? lastLeagueNumber : 0;
-			});
-		case "Letzte UC-Trophies":
-			return Comparator.comparingInt((Player p) -> {
-				Integer lastLeagueTrophies = p.getLastPathOfLegendTrophies();
-				return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
-			});
-		default:
-			return Comparator.comparingInt((_) -> 0);
+			case "Wins":
+				return Comparator.comparingInt((Player p) -> p.getCurrentMonthWins().wins);
+			case "Trophies":
+				return Comparator.comparingInt((Player p) -> {
+					Integer trophies = p.getTrophies();
+					return trophies != null ? trophies : 0;
+				});
+			case "UC-Trophies":
+				return Comparator.comparingInt((Player p) -> {
+					Integer polTrophies = p.getPoLTrophies();
+					return polTrophies != null ? polTrophies : 0;
+				});
+			case "Ranked-Liga":
+				return Comparator.comparingInt((Player p) -> {
+					Integer leagueNumber = p.getPoLLeagueNumber();
+					return leagueNumber != null ? leagueNumber : 0;
+				});
+			case "Letzte Ranked-Liga":
+				return Comparator.comparingInt((Player p) -> {
+					Integer lastLeagueNumber = p.getLastPathOfLegendLeagueNumber();
+					return lastLeagueNumber != null ? lastLeagueNumber : 0;
+				});
+			case "Letzte UC-Trophies":
+				return Comparator.comparingInt((Player p) -> {
+					Integer lastLeagueTrophies = p.getLastPathOfLegendTrophies();
+					return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
+				});
+			default:
+				return Comparator.comparingInt((_) -> 0);
 		}
 	}
 
