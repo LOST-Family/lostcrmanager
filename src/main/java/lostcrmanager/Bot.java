@@ -37,6 +37,7 @@ import commands.kickpoints.kpremove;
 import commands.kickpoints.kpremovereason;
 import commands.links.link;
 import commands.links.playerinfo;
+import commands.links.relink;
 import commands.links.unlink;
 import commands.memberlist.addmember;
 import commands.memberlist.editmember;
@@ -145,7 +146,7 @@ public class Bot extends ListenerAdapter {
 						new kpremove(), new kpedit(), new kpinfo(), new kpclan(), new clanconfig(),
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
 						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(),
-						new checkroles(), new winsfails())
+						new checkroles(), new winsfails(), new relink())
 				.build();
 	}
 
@@ -163,6 +164,15 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "tag",
 									"Der Spieler, wessen Verknüpfung entfernt werden soll", true)
 									.setAutoComplete(true)),
+					Commands.slash("relink",
+							"Verlinke einen Clash Royale Account neu mit einem Discord User oder einer UserID.")
+							.addOptions(
+									new OptionData(OptionType.STRING, "tag", "Der Tag des Clash Royale Accounts", true)
+											.setAutoComplete(true))
+							.addOption(OptionType.MENTIONABLE, "user",
+									"Der User, mit dem der Account verlinkt werden soll.")
+							.addOption(OptionType.STRING, "userid",
+									"Die ID des Users, mit dem der Account verlinkt werden soll."),
 					Commands.slash("restart", "Startet den Bot neu."),
 					Commands.slash("addmember", "Füge einen Spieler zu einem Clan hinzu.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
