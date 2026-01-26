@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import commands.admin.copyreasons;
 import commands.admin.restart;
 import commands.kickpoints.clanconfig;
 import commands.kickpoints.kpadd;
@@ -32,6 +33,7 @@ import commands.kickpoints.kpclan;
 import commands.kickpoints.kpedit;
 import commands.kickpoints.kpeditreason;
 import commands.kickpoints.kpinfo;
+import commands.kickpoints.kplistreasons;
 import commands.kickpoints.kpmember;
 import commands.kickpoints.kpremove;
 import commands.kickpoints.kpremovereason;
@@ -113,6 +115,7 @@ public class Bot extends ListenerAdapter {
 		datautil.Connection.tablesExists();
 		datautil.Connection.migrateRemindersTable();
 		datautil.Connection.migrateClanMembersTable();
+		datautil.Connection.migrateKickpointReasonsTable();
 
 		// Start REST API servers
 		LinkWebServer.start();
@@ -140,10 +143,11 @@ public class Bot extends ListenerAdapter {
 		JDABuilder.createDefault(token).enableIntents(GatewayIntent.GUILD_MEMBERS)
 				.setMemberCachePolicy(MemberCachePolicy.ALL).setChunkingFilter(ChunkingFilter.ALL)
 				.setActivity(Activity.playing("mit deinen Kickpunkten"))
-				.addEventListeners(new Bot(), new link(), new unlink(), new restart(), new addmember(),
+				.addEventListeners(new Bot(), new link(), new unlink(), new restart(), new copyreasons(),
+						new addmember(),
 						new removemember(), new listmembers(), new editmember(), new playerinfo(), new memberstatus(),
 						new kpaddreason(), new kpremovereason(), new kpeditreason(), new kpadd(), new kpmember(),
-						new kpremove(), new kpedit(), new kpinfo(), new kpclan(), new clanconfig(),
+						new kpremove(), new kpedit(), new kpinfo(), new kplistreasons(), new kpclan(), new clanconfig(),
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
 						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(),
 						new checkroles(), new winsfails(), new relink())
@@ -174,6 +178,9 @@ public class Bot extends ListenerAdapter {
 							.addOption(OptionType.STRING, "userid",
 									"Die ID des Users, mit dem der Account verlinkt werden soll."),
 					Commands.slash("restart", "Startet den Bot neu."),
+					Commands.slash("copyreasons", "Kopiere Kickpunkt-Gründe eines Clans auf alle anderen Clans.")
+							.addOptions(new OptionData(OptionType.STRING, "clan",
+									"Der Clan, von dem kopiert werden soll.", true).setAutoComplete(true)),
 					Commands.slash("addmember", "Füge einen Spieler zu einem Clan hinzu.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, zu welchem der Spieler hinzugefügt werden soll", true)
@@ -218,7 +225,9 @@ public class Bot extends ListenerAdapter {
 									"Der Clan, für welchen dieser erstellt wird.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "reason", "Der angezeigte Grund.", true))
 							.addOptions(
-									new OptionData(OptionType.INTEGER, "amount", "Die Anzahl der Kickpunkte.", true)),
+									new OptionData(OptionType.INTEGER, "amount", "Die Anzahl der Kickpunkte.", true))
+							.addOptions(
+									new OptionData(OptionType.INTEGER, "index", "Der Index für die Sortierung.")),
 					Commands.slash("kpremovereason", "Lösche einen vorgefertigten Kickpunktgrund.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, für welchen dieser erstellt wird.", true).setAutoComplete(true))
@@ -229,7 +238,8 @@ public class Bot extends ListenerAdapter {
 									"Der Clan, für welchen dieser erstellt wird.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "reason", "Der angezeigte Grund.", true)
 									.setAutoComplete(true))
-							.addOptions(new OptionData(OptionType.INTEGER, "amount", "Die Anzahl.", true)),
+							.addOptions(new OptionData(OptionType.INTEGER, "amount", "Die Anzahl.", true))
+							.addOptions(new OptionData(OptionType.INTEGER, "index", "Der neue Index.")),
 					Commands.slash("kpadd", "Gebe einem Spieler Kickpunkte.")
 							.addOptions(new OptionData(OptionType.STRING, "player",
 									"Der Spieler, welcher die Kickpunkte erhält.", true).setAutoComplete(true))
@@ -247,6 +257,9 @@ public class Bot extends ListenerAdapter {
 					Commands.slash("kpinfo", "Infos über Kickpunkt-Gründe eines Clans.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Die Clan, welcher angezeigt werden soll.", true).setAutoComplete(true)),
+					Commands.slash("kplistreasons", "Liste aller Kickpunkt-Gründe eines Clans sortiert nach Index.")
+							.addOptions(new OptionData(OptionType.STRING, "clan",
+									"Der Clan, dessen Gründe angezeigt werden sollen.", true).setAutoComplete(true)),
 					Commands.slash("kpclan", "Zeige die Kickpunktanzahlen aller Spieler in einem Clan.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, welcher angezeigt werden soll.", true).setAutoComplete(true)),

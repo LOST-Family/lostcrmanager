@@ -29,6 +29,7 @@ public class kpeditreason extends ListenerAdapter {
 		OptionMapping clanOption = event.getOption("clan");
 		OptionMapping reasonoption = event.getOption("reason");
 		OptionMapping amountoption = event.getOption("amount");
+		OptionMapping indexOption = event.getOption("index");
 
 		if (clanOption == null || reasonoption == null || amountoption == null) {
 			event.getHook().editOriginalEmbeds(
@@ -48,9 +49,10 @@ public class kpeditreason extends ListenerAdapter {
 				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
 				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
 			event.getHook()
-			.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-					"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
-					MessageUtil.EmbedType.ERROR)).queue();
+					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+							"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+							MessageUtil.EmbedType.ERROR))
+					.queue();
 			return;
 		}
 
@@ -61,10 +63,11 @@ public class kpeditreason extends ListenerAdapter {
 					.queue();
 			return;
 		}
-		
-		if(clantag.equals("warteliste")) {
+
+		if (clantag.equals("warteliste")) {
 			event.getHook().editOriginalEmbeds(
-					MessageUtil.buildEmbed(title, "Diesen Befehl kannst du nicht auf die Warteliste ausführen.", MessageUtil.EmbedType.ERROR))
+					MessageUtil.buildEmbed(title, "Diesen Befehl kannst du nicht auf die Warteliste ausführen.",
+							MessageUtil.EmbedType.ERROR))
 					.queue();
 			return;
 		}
@@ -78,8 +81,16 @@ public class kpeditreason extends ListenerAdapter {
 			return;
 		}
 
-		DBUtil.executeUpdate("UPDATE kickpoint_reasons SET amount = ? WHERE name = ? AND clan_tag = ?", amount, reason,
-				clantag);
+		if (indexOption != null) {
+			int index = indexOption.getAsInt();
+			DBUtil.executeUpdate("UPDATE kickpoint_reasons SET amount = ?, index = ? WHERE name = ? AND clan_tag = ?",
+					amount, index, reason,
+					clantag);
+		} else {
+			DBUtil.executeUpdate("UPDATE kickpoint_reasons SET amount = ? WHERE name = ? AND clan_tag = ?", amount,
+					reason,
+					clantag);
+		}
 
 		Clan clan = new Clan(clantag);
 
@@ -87,6 +98,9 @@ public class kpeditreason extends ListenerAdapter {
 		desc += "Grund: " + reason + "\n";
 		desc += "Clan: " + clan.getInfoStringDB() + "\n";
 		desc += "Anzahl: " + amount + "\n";
+		if (indexOption != null) {
+			desc += "Neuer Index: " + indexOption.getAsInt() + "\n";
+		}
 
 		event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
 

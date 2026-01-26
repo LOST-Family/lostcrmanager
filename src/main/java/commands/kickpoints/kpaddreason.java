@@ -29,6 +29,7 @@ public class kpaddreason extends ListenerAdapter {
 		OptionMapping clanOption = event.getOption("clan");
 		OptionMapping reasonoption = event.getOption("reason");
 		OptionMapping amountoption = event.getOption("amount");
+		OptionMapping indexOption = event.getOption("index");
 
 		if (clanOption == null || reasonoption == null || amountoption == null) {
 			event.getHook().editOriginalEmbeds(
@@ -40,6 +41,11 @@ public class kpaddreason extends ListenerAdapter {
 		String reason = reasonoption.getAsString();
 		String clantag = clanOption.getAsString();
 		int amount = amountoption.getAsInt();
+		Integer index = null;
+		if (indexOption != null) {
+			index = indexOption.getAsInt();
+		}
+
 		Clan clan = new Clan(clantag);
 
 		if (!clan.ExistsDB()) {
@@ -49,10 +55,11 @@ public class kpaddreason extends ListenerAdapter {
 					.queue();
 			return;
 		}
-		
-		if(clantag.equals("warteliste")) {
+
+		if (clantag.equals("warteliste")) {
 			event.getHook().editOriginalEmbeds(
-					MessageUtil.buildEmbed(title, "Diesen Befehl kannst du nicht auf die Warteliste ausführen.", MessageUtil.EmbedType.ERROR))
+					MessageUtil.buildEmbed(title, "Diesen Befehl kannst du nicht auf die Warteliste ausführen.",
+							MessageUtil.EmbedType.ERROR))
 					.queue();
 			return;
 		}
@@ -62,9 +69,10 @@ public class kpaddreason extends ListenerAdapter {
 				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
 				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
 			event.getHook()
-			.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-					"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
-					MessageUtil.EmbedType.ERROR)).queue();
+					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+							"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+							MessageUtil.EmbedType.ERROR))
+					.queue();
 			return;
 		}
 
@@ -77,13 +85,26 @@ public class kpaddreason extends ListenerAdapter {
 			return;
 		}
 
-		DBUtil.executeUpdate("INSERT INTO kickpoint_reasons (name, clan_tag, amount) VALUES (?, ?, ?)", reason, clantag,
-				amount);
+		if (index == null) {
+			// Calculate max index + 1
+			String sql = "SELECT MAX(index) FROM kickpoint_reasons WHERE clan_tag = ?";
+			Integer maxIndex = DBUtil.getValueFromSQL(sql, Integer.class, clantag);
+			if (maxIndex == null) {
+				index = 1;
+			} else {
+				index = maxIndex + 1;
+			}
+		}
+
+		DBUtil.executeUpdate("INSERT INTO kickpoint_reasons (name, clan_tag, amount, index) VALUES (?, ?, ?, ?)",
+				reason, clantag,
+				amount, index);
 
 		String desc = "Der Kickpunkt-Grund wurde als Vorlage hinzugefügt.\n";
 		desc += "Grund: " + reason + "\n";
 		desc += "Clan: " + clan.getInfoStringDB() + "\n";
-		desc += "Anzahl: " + amount;
+		desc += "Anzahl: " + amount + "\n";
+		desc += "Index: " + index;
 
 		event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
 

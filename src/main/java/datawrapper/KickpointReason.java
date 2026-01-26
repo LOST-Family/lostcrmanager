@@ -12,6 +12,7 @@ public class KickpointReason {
 	private String kpreason;
 	private String clan_tag;
 	private Integer amount;
+	private Integer index;
 
 	public KickpointReason(String reason, String clan_tag) {
 		kpreason = reason;
@@ -31,7 +32,7 @@ public class KickpointReason {
 		}
 		return false;
 	}
-	
+
 	// all public getter Methods
 
 	public String getReason() {
@@ -48,5 +49,13 @@ public class KickpointReason {
 			amount = DBUtil.getValueFromSQL(sql, Integer.class, clan_tag, kpreason);
 		}
 		return amount;
+	}
+
+	public Integer getIndex() {
+		if (index == null) {
+			String sql = "SELECT index FROM kickpoint_reasons WHERE clan_tag = ? AND name = ?";
+			index = DBUtil.getValueFromSQL(sql, Integer.class, clan_tag, kpreason);
+		}
+		return index;
 	}
 }

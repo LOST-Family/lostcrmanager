@@ -58,48 +58,50 @@ public class Connection {
 						System.out.println("Tabelle '" + tableName + "' existiert nicht. Erstelle sie jetzt...");
 						String createTableSQL = null;
 						switch (tableName) {
-						case "clans":
-							createTableSQL = "CREATE TABLE " + tableName + " (tag TEXT PRIMARY KEY," + "name TEXT,"
-									+ "index BIGINT," + "guild_id CHARACTER VARYING(19),"
-									+ "leader_roleid CHARACTER VARYING(19)," + "coleader_roleid CHARACTER VARYING(19),"
-									+ "elder_roleid CHARACTER VARYING(19)," + "member_roleid CHARACTER VARYING(19))";
-							break;
-						case "users":
-							createTableSQL = "CREATE TABLE " + tableName
-									+ " (discord_id CHARACTER VARYING(19) PRIMARY KEY," + "is_admin BOOLEAN)";
-							break;
-						case "players":
-							createTableSQL = "CREATE TABLE " + tableName + " (cr_tag TEXT PRIMARY KEY,"
-									+ "discord_id CHARACTER VARYING(19), name TEXT)";
-							break;
-						case "clan_members":
-							createTableSQL = "CREATE TABLE " + tableName + " (player_tag TEXT PRIMARY KEY,"
-									+ "clan_tag TEXT," + "clan_role TEXT)";
-							break;
-						case "clan_settings":
-							createTableSQL = "CREATE TABLE " + tableName + " (clan_tag TEXT PRIMARY KEY,"
-									+ "max_kickpoints BIGINT," + "kickpoints_expire_after_days SMALLINT)";
-							break;
-						case "kickpoint_reasons":
-							createTableSQL = "CREATE TABLE " + tableName + " (name TEXT," + "clan_tag text,"
-									+ "amount SMALLINT," + "PRIMARY KEY (name, clan_tag))";
-							break;
-						case "kickpoints":
-							createTableSQL = "CREATE TABLE " + tableName + " (id BIGINT PRIMARY KEY,"
-									+ "player_tag CHARACTER VARYING(19)," + "date TIMESTAMPTZ," + "amount BIGINT,"
-									+ "description CHARACTER VARYING(100),"
-									+ "created_by_discord_id CHARACTER VARYING(19)," + "created_at TIMESTAMPTZ,"
-									+ "expires_at TIMESTAMPTZ)";
-							break;
-						case "reminders":
-							createTableSQL = "CREATE TABLE " + tableName + " (id BIGINT PRIMARY KEY,"
-									+ "clantag TEXT," + "channelid TEXT," + "time TIME," + "last_sent_date DATE)";
-							break;
-						case "player_wins":
-							createTableSQL = "CREATE TABLE " + tableName + " (player_tag TEXT,"
-									+ "recorded_at TIMESTAMPTZ," + "wins INTEGER,"
-									+ "PRIMARY KEY (player_tag, recorded_at))";
-							break;
+							case "clans":
+								createTableSQL = "CREATE TABLE " + tableName + " (tag TEXT PRIMARY KEY," + "name TEXT,"
+										+ "index BIGINT," + "guild_id CHARACTER VARYING(19),"
+										+ "leader_roleid CHARACTER VARYING(19),"
+										+ "coleader_roleid CHARACTER VARYING(19),"
+										+ "elder_roleid CHARACTER VARYING(19),"
+										+ "member_roleid CHARACTER VARYING(19))";
+								break;
+							case "users":
+								createTableSQL = "CREATE TABLE " + tableName
+										+ " (discord_id CHARACTER VARYING(19) PRIMARY KEY," + "is_admin BOOLEAN)";
+								break;
+							case "players":
+								createTableSQL = "CREATE TABLE " + tableName + " (cr_tag TEXT PRIMARY KEY,"
+										+ "discord_id CHARACTER VARYING(19), name TEXT)";
+								break;
+							case "clan_members":
+								createTableSQL = "CREATE TABLE " + tableName + " (player_tag TEXT PRIMARY KEY,"
+										+ "clan_tag TEXT," + "clan_role TEXT)";
+								break;
+							case "clan_settings":
+								createTableSQL = "CREATE TABLE " + tableName + " (clan_tag TEXT PRIMARY KEY,"
+										+ "max_kickpoints BIGINT," + "kickpoints_expire_after_days SMALLINT)";
+								break;
+							case "kickpoint_reasons":
+								createTableSQL = "CREATE TABLE " + tableName + " (name TEXT," + "clan_tag text,"
+										+ "amount SMALLINT," + "PRIMARY KEY (name, clan_tag))";
+								break;
+							case "kickpoints":
+								createTableSQL = "CREATE TABLE " + tableName + " (id BIGINT PRIMARY KEY,"
+										+ "player_tag CHARACTER VARYING(19)," + "date TIMESTAMPTZ," + "amount BIGINT,"
+										+ "description CHARACTER VARYING(100),"
+										+ "created_by_discord_id CHARACTER VARYING(19)," + "created_at TIMESTAMPTZ,"
+										+ "expires_at TIMESTAMPTZ)";
+								break;
+							case "reminders":
+								createTableSQL = "CREATE TABLE " + tableName + " (id BIGINT PRIMARY KEY,"
+										+ "clantag TEXT," + "channelid TEXT," + "time TIME," + "last_sent_date DATE)";
+								break;
+							case "player_wins":
+								createTableSQL = "CREATE TABLE " + tableName + " (player_tag TEXT,"
+										+ "recorded_at TIMESTAMPTZ," + "wins INTEGER,"
+										+ "PRIMARY KEY (player_tag, recorded_at))";
+								break;
 						}
 
 						try (Statement stmt = conn.createStatement()) {
@@ -133,7 +135,7 @@ public class Connection {
 					System.out.println("Column 'last_sent_date' already exists in reminders table.");
 				}
 			}
-			
+
 			// Add weekday column to reminders table if it doesn't exist
 			try (ResultSet columns = dbm.getColumns(null, null, "reminders", "weekday")) {
 				if (!columns.next()) {
@@ -173,6 +175,29 @@ public class Connection {
 			}
 		} catch (SQLException e) {
 			System.err.println("Error migrating clan_members table: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	public static void migrateKickpointReasonsTable() {
+		// Add index column to kickpoint_reasons table if it doesn't exist
+		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
+			DatabaseMetaData dbm = conn.getMetaData();
+			try (ResultSet columns = dbm.getColumns(null, null, "kickpoint_reasons", "index")) {
+				if (!columns.next()) {
+					// Column doesn't exist, add it
+					System.out.println("Adding 'index' column to kickpoint_reasons table...");
+					String alterTableSQL = "ALTER TABLE kickpoint_reasons ADD COLUMN index SMALLINT";
+					try (Statement stmt = conn.createStatement()) {
+						stmt.executeUpdate(alterTableSQL);
+						System.out.println("Column 'index' added successfully.");
+					}
+				} else {
+					System.out.println("Column 'index' already exists in kickpoint_reasons table.");
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Error migrating kickpoint_reasons table: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}

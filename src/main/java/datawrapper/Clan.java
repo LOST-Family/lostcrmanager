@@ -59,14 +59,15 @@ public class Clan {
 
 	public String getRoleID(Role role) {
 		switch (role) {
-		case LEADER:
-			return DBUtil.getValueFromSQL("SELECT leader_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
-		case COLEADER:
-			return DBUtil.getValueFromSQL("SELECT coleader_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
-		case ELDER:
-			return DBUtil.getValueFromSQL("SELECT elder_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
-		case MEMBER:
-			return DBUtil.getValueFromSQL("SELECT member_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+			case LEADER:
+				return DBUtil.getValueFromSQL("SELECT leader_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+			case COLEADER:
+				return DBUtil.getValueFromSQL("SELECT coleader_roleid FROM clans WHERE tag = ?", String.class,
+						clan_tag);
+			case ELDER:
+				return DBUtil.getValueFromSQL("SELECT elder_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+			case MEMBER:
+				return DBUtil.getValueFromSQL("SELECT member_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
 		}
 		return null;
 	}
@@ -78,7 +79,7 @@ public class Clan {
 			return getNameAPI();
 		}
 	}
-	
+
 	public String getInfoStringDB() {
 		if (!clan_tag.equals("warteliste")) {
 			return getNameDB() + " (" + clan_tag + ")";
@@ -158,9 +159,8 @@ public class Clan {
 		if (kickpoint_reasons == null) {
 			kickpoint_reasons = new ArrayList<>();
 
-			String sql = "SELECT name, clan_tag FROM kickpoint_reasons WHERE clan_tag = ?";
+			String sql = "SELECT name, clan_tag FROM kickpoint_reasons WHERE clan_tag = ? ORDER BY index ASC";
 			try (PreparedStatement pstmt = Connection.getConnection().prepareStatement(sql)) {
-				// Parameter setzen
 				pstmt.setObject(1, clan_tag);
 
 				try (ResultSet rs = pstmt.executeQuery()) {
