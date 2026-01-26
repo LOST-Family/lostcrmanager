@@ -19,6 +19,14 @@ import webserver.api.dto.ClanDTO;
 import webserver.api.dto.PlayerDTO;
 import webserver.api.dto.UserDTO;
 import java.util.concurrent.Executors;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import lostcrmanager.Bot;
 
 /**
  * REST API Server (ported from lostmanager) Clan-specific endpoints removed.
@@ -50,6 +58,7 @@ public class RestApiServer {
 		server.createContext("/api/clans", new ClansHandler());
 		server.createContext("/api/players/", new PlayerHandler());
 		server.createContext("/api/users/", new UserHandler());
+		server.createContext("/api/coleaders", new ColeadersHandler());
 
 		server.setExecutor(Executors.newFixedThreadPool(10));
 		server.start();
@@ -371,6 +380,106 @@ public class RestApiServer {
 
 			} catch (Exception e) {
 				handleException(exchange, "ClansHandler", e);
+			}
+		}
+	}
+
+	/**
+	 * Handler for GET /api/coleaders
+	 * Returns a list of Discord users who are Leader or Co-Leader in a registered
+	 * clan,
+	 * along with their highest level linked account that is currently in a clan.
+	 */
+	private class ColeadersHandler implements HttpHandler {
+		@SuppressWarnings("null")
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			if ("OPTIONS".equals(exchange.getRequestMethod())) {
+				addCorsHeaders(exchange);
+				exchange.sendResponseHeaders(204, -1);
+				return;
+			}
+
+			if (!"GET".equals(exchange.getRequestMethod())) {
+				sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+				return;
+			}
+
+			if (!validateApiToken(exchange)) {
+				sendResponse(exchange, 401, "{\"error\":\"Unauthorized - Invalid or missing API token\"}");
+				return;
+			}
+
+			try {
+				Guild guild = Bot.getJda().getGuildById(Bot.guild_id);
+				if (guild == null) {
+					sendResponse(exchange, 500, "{\"error\":\"Guild not found\"}");
+					return;
+				}
+
+				ArrayList<String> allClans = DBManager.getAllClans();
+				Set<String> targetRoleIds = new HashSet<>();
+
+				// Collect all leader and coleader role IDs
+				for (String clantag : allClans) {
+					Clan clan = new Clan(clantag);
+					String leaderRole = clan.getRoleID(Clan.Role.LEADER);
+					String coleaderRole = clan.getRoleID(Clan.Role.COLEADER);
+					if (leaderRole != null)
+						targetRoleIds.add(leaderRole);
+					if (coleaderRole != null)
+						targetRoleIds.add(coleaderRole);
+				}
+
+				Set<Member> distinctMembers = new HashSet<>();
+				for (String roleId : targetRoleIds) {
+					Role role = guild.getRoleById(roleId);
+					if (role != null) {
+						distinctMembers.addAll(guild.getMembersWithRoles(role));
+					}
+				}
+
+				List<Map<String, Object>> resultList = new ArrayList<>();
+
+				for (Member member : distinctMembers) {
+					String userId = member.getId();
+					User user = new User(userId);
+					ArrayList<Player> linkedAccounts = user.getAllLinkedAccounts();
+
+					if (linkedAccounts == null || linkedAccounts.isEmpty()) {
+						continue;
+					}
+
+					Player bestAccount = null;
+					int maxLevel = -1;
+
+					// Filter: must be in a clan (getClanDB() != null) and find highest level
+					for (Player p : linkedAccounts) {
+						// Only consider accounts that are actually in a clan (per DB)
+						if (p.getClanDB() != null) {
+							Integer level = p.getExpLevelAPI();
+							if (level != null && level > maxLevel) {
+								maxLevel = level;
+								bestAccount = p;
+							}
+						}
+					}
+
+					if (bestAccount != null) {
+						Map<String, Object> entry = new HashMap<>();
+						entry.put("userId", userId);
+						entry.put("highestAccountTag", bestAccount.getTag());
+						entry.put("highestAccountName", bestAccount.getNameAPI());
+
+						resultList.add(entry);
+					}
+				}
+
+				String json = objectMapper.writeValueAsString(resultList);
+				sendJsonResponse(exchange, 200, json);
+
+			} catch (Exception e) {
+				handleException(exchange, "ColeadersHandler", e);
 			}
 		}
 	}
