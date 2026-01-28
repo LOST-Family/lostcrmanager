@@ -11,8 +11,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +55,7 @@ import commands.util.checkroles;
 import commands.util.cwfails;
 import commands.util.leaguetrophylist;
 import commands.util.statslist;
+import commands.util.trackchannels;
 import commands.wins.wins;
 import commands.wins.winsfails;
 import datautil.APIUtil;
@@ -67,7 +68,9 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -150,7 +153,7 @@ public class Bot extends ListenerAdapter {
 						new kpremove(), new kpedit(), new kpinfo(), new kplistreasons(), new kpclan(), new clanconfig(),
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
 						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(),
-						new checkroles(), new winsfails(), new relink())
+						new checkroles(), new winsfails(), new relink(), new trackchannels())
 				.build();
 	}
 
@@ -355,7 +358,19 @@ public class Bot extends ListenerAdapter {
 									.setRequired(false))
 							.addOptions(new OptionData(OptionType.STRING, "exclude_leaders",
 									"(Optional) Wenn 'true', werden Leader, Co-Leader und Admins von der Prüfung ausgeschlossen")
-									.setAutoComplete(true).setRequired(false)))
+									.setAutoComplete(true).setRequired(false)),
+					Commands.slash("trackchanneladd", "Füge einen TrackChannel hinzu (Admin).")
+							.addOption(OptionType.STRING, "name", "Der Name des Events", true)
+							.addOption(OptionType.STRING, "channelid", "Die Discord-Kanal-ID", true),
+					Commands.slash("trackchannelremove", "Entferne einen TrackChannel (Admin).")
+							.addOptions(new OptionData(OptionType.STRING, "trackchannel",
+									"Der zu entfernende TrackChannel", true).setAutoComplete(true)),
+					Commands.slash("trackchannellist", "Liste alle TrackChannels auf (Coleader+)."),
+					Commands.slash("trackchanneltime", "Setze die Zeit für einen TrackChannel (Coleader+).")
+							.addOptions(new OptionData(OptionType.STRING, "trackchannel", "Der TrackChannel", true)
+									.setAutoComplete(true))
+							.addOptions(new OptionData(OptionType.STRING, "timestamp",
+									"Der Zeitpunkt (dd.MM.yyyy HH:mm)", true).setAutoComplete(true)))
 					.queue();
 		}
 	}
@@ -457,10 +472,11 @@ public class Bot extends ListenerAdapter {
 								getJda().getGuildById(guild_id).retrieveMemberById(id).submit().get()
 										.getEffectiveName(),
 								id);
-					} catch (ExecutionException e) {
-						// member not on guild, ignore
 					} catch (Exception e) {
-						System.out.println("Fehler beim Namenupdate von Tag " + id);
+						if (e.getMessage().contains("Unknown Member")) {
+							continue;
+						}
+						System.out.println("Fehler beim Namenupdate von ID " + id + "; Error: " + e.getMessage());
 					}
 				}
 
@@ -486,10 +502,58 @@ public class Bot extends ListenerAdapter {
 		Runnable task = () -> {
 			Thread thread = new Thread(() -> {
 				checkReminders();
+				updateTrackChannels();
 			});
 			thread.start();
 		};
 		scheduler.scheduleAtFixedRate(task, 0, 5, TimeUnit.MINUTES);
+	}
+
+	@SuppressWarnings("null")
+	public static void updateTrackChannels() {
+		ZoneId zoneId = ZoneId.of("Europe/Berlin");
+		ZonedDateTime now = ZonedDateTime.now(zoneId);
+
+		for (datawrapper.TrackChannel tc : datawrapper.TrackChannel.getAll()) {
+			// Hardcoded logic for CR-EOS
+			if (tc.getName().equalsIgnoreCase("CR-EOS")) {
+				ZonedDateTime nextFirstMonday = now.with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY))
+						.withHour(10).withMinute(0).withSecond(0).withNano(0);
+				if (now.isAfter(nextFirstMonday)) {
+					nextFirstMonday = now.plusMonths(1).with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY))
+							.withHour(10).withMinute(0).withSecond(0).withNano(0);
+				}
+
+				if (tc.getTimestamp() == null || !tc.getTimestamp().isEqual(nextFirstMonday.toOffsetDateTime())) {
+					tc.setTimestamp(nextFirstMonday.toOffsetDateTime());
+				}
+			}
+
+			String newName;
+			if (tc.getTimestamp() == null || tc.getTimestamp().isBefore(now.toOffsetDateTime())) {
+				newName = tc.getName() + " in X";
+			} else {
+				java.time.Duration duration = java.time.Duration.between(now.toOffsetDateTime(), tc.getTimestamp());
+				long days = duration.toDays();
+				long hours = duration.toHours() % 24;
+				newName = tc.getName() + " in " + days + "D " + hours + "H";
+			}
+
+			try {
+				Guild guild = getJda().getGuildById(guild_id);
+				if (guild != null) {
+					GuildChannel channel = guild.getGuildChannelById(tc.getChannelId());
+					if (channel != null) {
+						if (!channel.getName().equals(newName)) {
+							channel.getManager().setName(newName).queue();
+						}
+					}
+				}
+			} catch (Exception e) {
+				System.err
+						.println("Fehler beim Updaten des Channel-Namens für " + tc.getName() + ": " + e.getMessage());
+			}
+		}
 	}
 
 	private static void checkReminders() {

@@ -78,7 +78,7 @@ public class DBManager {
 		}
 
 		List<Command.Choice> choices = new ArrayList<>();
-		
+
 		for (Tuple<String, String> available : clans) {
 			String display = available.getFirst();
 			String tag = available.getSecond();
@@ -343,6 +343,31 @@ public class DBManager {
 			e.printStackTrace();
 		}
 
+		return choices;
+	}
+
+	@SuppressWarnings("null")
+	public static List<Command.Choice> getTrackChannelsAutocomplete(String input) {
+		List<Command.Choice> choices = new ArrayList<>();
+		String sql = "SELECT id, name FROM trackchannels";
+		try (PreparedStatement pstmt = Connection.getConnection().prepareStatement(sql)) {
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					int id = rs.getInt("id");
+					String name = rs.getString("name");
+					String display = id + " | " + name;
+
+					if (display.toLowerCase().contains(input.toLowerCase())) {
+						choices.add(new Command.Choice(display, String.valueOf(id)));
+						if (choices.size() == 25) {
+							break;
+						}
+					}
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return choices;
 	}
 
