@@ -31,18 +31,18 @@ public class MessageUtil {
 			embedreply.setFooter(additionalfooter + "\n" + footer);
 		}
 		switch (type) {
-		case INFO:
-			embedreply.setColor(Color.CYAN);
-			break;
-		case SUCCESS:
-			embedreply.setColor(Color.GREEN);
-			break;
-		case ERROR:
-			embedreply.setColor(Color.RED);
-			break;
-		case LOADING:
-			embedreply.setColor(Color.MAGENTA);
-			break;
+			case INFO:
+				embedreply.setColor(Color.CYAN);
+				break;
+			case SUCCESS:
+				embedreply.setColor(Color.GREEN);
+				break;
+			case ERROR:
+				embedreply.setColor(Color.RED);
+				break;
+			case LOADING:
+				embedreply.setColor(Color.MAGENTA);
+				break;
 		}
 		return embedreply.build();
 	}
@@ -71,6 +71,7 @@ public class MessageUtil {
 					e.printStackTrace();
 				}
 			}).start();
+		}, a -> {
 		});
 	}
 

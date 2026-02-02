@@ -71,8 +71,12 @@ public class DBManager {
 		return available;
 	}
 
-	@SuppressWarnings("null")
 	public static List<Command.Choice> getClansAutocomplete(String input) {
+		return getClansAutocompleteWithMarked(input, false);
+	}
+
+	@SuppressWarnings("null")
+	public static List<Command.Choice> getClansAutocompleteWithMarked(String input, boolean includeMarked) {
 		if (clans == null) {
 			cacheClans();
 		}
@@ -85,10 +89,15 @@ public class DBManager {
 			if (display.toLowerCase().contains(input.toLowerCase())
 					|| tag.toLowerCase().startsWith(input.toLowerCase())) {
 				choices.add(new Command.Choice(display, tag));
-				if (choices.size() == 25) {
+
+				if (choices.size() >= 25) {
 					break;
 				}
 			}
+		}
+
+		if (includeMarked && "alle markierten spieler".contains(input.toLowerCase())) {
+			choices.add(new Command.Choice("Alle markierten Spieler", "all_marked"));
 		}
 		Thread thread = new Thread(() -> {
 			if (!clanslocked)

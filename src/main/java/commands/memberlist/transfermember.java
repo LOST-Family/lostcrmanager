@@ -58,7 +58,8 @@ public class transfermember extends ListenerAdapter {
 
 			if (!player.IsLinked()) {
 				event.getHook().editOriginalEmbeds(
-						MessageUtil.buildEmbed(title, "Dieser Spieler ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
+						MessageUtil.buildEmbed(title, "Dieser Spieler ist nicht verlinkt.",
+								MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -69,7 +70,8 @@ public class transfermember extends ListenerAdapter {
 
 			if (playerclan == null) {
 				event.getHook().editOriginalEmbeds(
-						MessageUtil.buildEmbed(title, "Dieser Spieler ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
+						MessageUtil.buildEmbed(title, "Dieser Spieler ist in keinem Clan.",
+								MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -141,7 +143,8 @@ public class transfermember extends ListenerAdapter {
 			if (role == Player.RoleType.LEADER && userexecuted.getClanRoles().get(clantag) != Player.RoleType.ADMIN) {
 				event.getHook()
 						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Um jemanden als Leader zu entfernen, musst du Admin sein.", MessageUtil.EmbedType.ERROR))
+								"Um jemanden als Leader zu entfernen, musst du Admin sein.",
+								MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -179,9 +182,10 @@ public class transfermember extends ListenerAdapter {
 					String memberroleid = playerclan.getRoleID(Clan.Role.MEMBER);
 					Role memberrole = guild.getRoleById(memberroleid);
 					if (member.getRoles().contains(memberrole)) {
+						guild.removeRoleFromMember(member, memberrole).queue();
 						desc += "\n\n";
-						desc += "**Der User <@" + userid + "> hat die Rolle <@&" + memberroleid
-								+ "> noch. Nehme sie ihm manuell, falls erwünscht.**\n";
+						desc += "**Dem User <@" + userid + "> wurde die Rolle <@&" + memberroleid
+								+ "> entzogen.**\n";
 					} else {
 						desc += "\n\n";
 						desc += "**Der User <@" + userid + "> hat die Rolle <@&" + memberroleid
@@ -207,7 +211,8 @@ public class transfermember extends ListenerAdapter {
 			MessageChannelUnion channel = event.getChannel();
 			MessageUtil.sendUserPingHidden(channel, userid);
 
-			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
+			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
+					.queue();
 		}).start();
 
 	}

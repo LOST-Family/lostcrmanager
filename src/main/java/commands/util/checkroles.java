@@ -65,7 +65,7 @@ public class checkroles extends ListenerAdapter {
 			}
 
 			String clantag = clanOption.getAsString();
-			
+
 			boolean ignoreHiddenColeaders = false;
 			if (ignoreHiddenColeadersOption != null) {
 				String ignoreHiddenColeadersValue = ignoreHiddenColeadersOption.getAsString();
@@ -119,7 +119,7 @@ public class checkroles extends ListenerAdapter {
 		String remainder = id.substring("checkroles_".length());
 		String clantag;
 		boolean ignoreHiddenColeaders = false;
-		
+
 		int lastUnderscore = remainder.lastIndexOf("_");
 		if (lastUnderscore != -1) {
 			clantag = remainder.substring(0, lastUnderscore);
@@ -129,7 +129,7 @@ public class checkroles extends ListenerAdapter {
 			// Fallback for old button IDs without ignore_hiddencoleaders
 			clantag = remainder;
 		}
-		
+
 		String title = "Rollen-Check";
 
 		event.getInteraction().getHook()
@@ -142,7 +142,7 @@ public class checkroles extends ListenerAdapter {
 		}, "CheckRolesRefresh-" + event.getUser().getId()).start();
 	}
 
-	@SuppressWarnings("null")
+	@SuppressWarnings({ "null", "unused" })
 	private void performRoleCheck(net.dv8tion.jda.api.interactions.InteractionHook hook, Guild guild, String title,
 			String clantag, boolean ignoreHiddenColeaders) {
 
@@ -195,24 +195,24 @@ public class checkroles extends ListenerAdapter {
 
 			// Always check the MEMBER role first
 			String memberRoleId = clan.getRoleID(Clan.Role.MEMBER);
-			
+
 			// Get expected Discord role ID based on clan role (for higher roles)
 			String expectedRoleId = null;
 			switch (roleDB) {
-			case LEADER:
-				expectedRoleId = clan.getRoleID(Clan.Role.LEADER);
-				break;
-			case COLEADER:
-				expectedRoleId = clan.getRoleID(Clan.Role.COLEADER);
-				break;
-			case ELDER:
-				expectedRoleId = clan.getRoleID(Clan.Role.ELDER);
-				break;
-			case MEMBER:
-				expectedRoleId = memberRoleId;
-				break;
-			default:
-				break;
+				case LEADER:
+					expectedRoleId = clan.getRoleID(Clan.Role.LEADER);
+					break;
+				case COLEADER:
+					expectedRoleId = clan.getRoleID(Clan.Role.COLEADER);
+					break;
+				case ELDER:
+					expectedRoleId = clan.getRoleID(Clan.Role.ELDER);
+					break;
+				case MEMBER:
+					expectedRoleId = memberRoleId;
+					break;
+				default:
+					break;
 			}
 
 			// Check if Discord user has the expected role(s)
@@ -233,7 +233,7 @@ public class checkroles extends ListenerAdapter {
 						continue; // Skip checking other roles if member role is missing
 					}
 				}
-				
+
 				// Check additional role for non-members (leader, coleader, elder)
 				if (expectedRoleId != null && !expectedRoleId.equals(memberRoleId)) {
 					Role expectedRole = guild.getRoleById(expectedRoleId);
@@ -269,8 +269,109 @@ public class checkroles extends ListenerAdapter {
 			}
 		}
 
+		description.append("\n");
+
+		// --- NEW: Check for members who have a role but shouldn't ---
+		List<String> unnecessaryRolesList = new ArrayList<>();
+		int membersWithUnnecessaryRoles = 0;
+
+		String elderRoleId = clan.getRoleID(Clan.Role.ELDER);
+		String memberRoleId = clan.getRoleID(Clan.Role.MEMBER);
+
+		java.util.HashSet<String> clanRoleIds = new java.util.HashSet<>();
+		if (elderRoleId != null)
+			clanRoleIds.add(elderRoleId);
+		if (memberRoleId != null)
+			clanRoleIds.add(memberRoleId);
+
+		if (!clanRoleIds.isEmpty()) {
+			for (Member m : guild.getMembers()) {
+				List<Role> memberRoles = m.getRoles();
+				boolean hasAnyClanRole = false;
+				for (Role r : memberRoles) {
+					if (clanRoleIds.contains(r.getId())) {
+						hasAnyClanRole = true;
+						break;
+					}
+				}
+
+				if (hasAnyClanRole) {
+					User user = new User(m.getId());
+					ArrayList<Player> linkedAccounts = user.getAllLinkedAccounts();
+
+					// Find the highest expected role for this user in this clan
+					Player.RoleType highestInGameRole = null;
+					for (Player p : linkedAccounts) {
+						if (p.getClanDB() == null)
+							continue;
+						if (clantag.equals(p.getClanDB().getTag())) {
+							Player.RoleType currentP = p.getRole();
+							if (highestInGameRole == null || isHigherRole(currentP, highestInGameRole)) {
+								highestInGameRole = currentP;
+							}
+						}
+					}
+
+					// Check if they should have any roles at all
+					if (highestInGameRole == null || highestInGameRole == Player.RoleType.NOTINCLAN) {
+						// Should not have any clan roles
+						StringBuilder rolesFound = new StringBuilder();
+						for (Role r : memberRoles) {
+							if (clanRoleIds.contains(r.getId())) {
+								if (rolesFound.length() > 0)
+									rolesFound.append(", ");
+								rolesFound.append(r.getAsMention());
+							}
+						}
+						unnecessaryRolesList.add(String.format("<@%s> - hat Rollen: %s (nicht im Clan)", m.getId(),
+								rolesFound.toString()));
+						membersWithUnnecessaryRoles++;
+					} else {
+
+						List<String> invalidRoles = new ArrayList<>();
+						for (Role r : memberRoles) {
+							String rId = r.getId();
+							if (!clanRoleIds.contains(rId))
+								continue;
+
+							boolean isAllowed = false;
+							// Map the Discord role back to what it represents
+							if (rId.equals(elderRoleId)) {
+								if (highestInGameRole == Player.RoleType.ELDER
+										|| highestInGameRole == Player.RoleType.COLEADER
+										|| highestInGameRole == Player.RoleType.LEADER)
+									isAllowed = true;
+							} else if (rId.equals(memberRoleId)) {
+								isAllowed = true; // Everyone in clan is a member
+							}
+
+							if (!isAllowed) {
+								invalidRoles.add(r.getAsMention());
+							}
+						}
+
+						if (!invalidRoles.isEmpty()) {
+							unnecessaryRolesList.add(String.format("<@%s> - **%s** - hat zu hohe Rollen: %s", m.getId(),
+									getRoleDisplayName(highestInGameRole), String.join(", ", invalidRoles)));
+							membersWithUnnecessaryRoles++;
+						}
+					}
+				}
+			}
+		}
+
+		if (unnecessaryRolesList.isEmpty()) {
+			description.append("**✅ Niemand hat Rollen, die er nicht haben sollte!**\n");
+		} else {
+			description.append("**Mitglieder mit Rollen, die sie nicht haben sollten:**\n");
+			for (String member : unnecessaryRolesList) {
+				description.append(member).append("\n");
+			}
+		}
+
 		// Create refresh button
-		Button refreshButton = Button.secondary("checkroles_" + clantag + "_" + ignoreHiddenColeaders, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
+		Button refreshButton = Button.secondary("checkroles_" + clantag + "_" + ignoreHiddenColeaders, "\u200B")
+				.withEmoji(Emoji.fromUnicode("🔁"));
 
 		// Add timestamp
 		ZonedDateTime jetzt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
@@ -281,18 +382,39 @@ public class checkroles extends ListenerAdapter {
 				"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
 	}
 
+	private boolean isHigherRole(Player.RoleType r1, Player.RoleType r2) {
+		return getRoleWeight(r1) > getRoleWeight(r2);
+	}
+
+	private int getRoleWeight(Player.RoleType role) {
+		if (role == null)
+			return -1;
+		switch (role) {
+			case LEADER:
+				return 4;
+			case COLEADER:
+				return 3;
+			case ELDER:
+				return 2;
+			case MEMBER:
+				return 1;
+			default:
+				return 0;
+		}
+	}
+
 	private String getRoleDisplayName(Player.RoleType roleType) {
 		switch (roleType) {
-		case LEADER:
-			return "Anführer";
-		case COLEADER:
-			return "Vize-Anführer";
-		case ELDER:
-			return "Ältester";
-		case MEMBER:
-			return "Mitglied";
-		default:
-			return "Unbekannt";
+			case LEADER:
+				return "Anführer";
+			case COLEADER:
+				return "Vize-Anführer";
+			case ELDER:
+				return "Ältester";
+			case MEMBER:
+				return "Mitglied";
+			default:
+				return "Unbekannt";
 		}
 	}
 }

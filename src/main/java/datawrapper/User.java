@@ -106,4 +106,16 @@ public class User {
 		return clanroles;
 	}
 
+	public boolean isColeaderOrHigher() {
+		if (isAdmin())
+			return true;
+
+		for (Player.RoleType role : getClanRoles().values()) {
+			if (role == Player.RoleType.LEADER || role == Player.RoleType.COLEADER || role == Player.RoleType.ADMIN) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }
