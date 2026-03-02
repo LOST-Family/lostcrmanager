@@ -17,6 +17,7 @@ import commands.kickpoints.kpadd;
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.KickpointReason;
+import datawrapper.MemberSignoff;
 import datawrapper.Player;
 import datawrapper.User;
 import lostcrmanager.Bot;
@@ -53,7 +54,7 @@ public class winsfails extends ListenerAdapter {
 		}
 
 		String clanInput = clanOption.getAsString();
-		
+
 		// Parse comma-separated clan tags
 		List<String> clansList = parseClanTags(clanInput);
 		if (clansList.isEmpty()) {
@@ -63,13 +64,14 @@ public class winsfails extends ListenerAdapter {
 					.queue();
 			return;
 		}
-		
+
 		// Check for waitlist in any clan
 		for (String clantag : clansList) {
 			if (clantag.equals("warteliste")) {
 				event.getHook()
 						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Diesen Befehl kannst du nicht auf die Warteliste ausführen.", MessageUtil.EmbedType.ERROR))
+								"Diesen Befehl kannst du nicht auf die Warteliste ausführen.",
+								MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -163,7 +165,7 @@ public class winsfails extends ListenerAdapter {
 			Clan c = new Clan(clantag);
 			if (!c.ExistsDB()) {
 				event.getHook()
-						.editOriginalEmbeds(MessageUtil.buildEmbed(title, 
+						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
 								"Clan " + clantag + " existiert nicht.", MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
@@ -191,7 +193,7 @@ public class winsfails extends ListenerAdapter {
 				ZonedDateTime startOfNextMonth = startOfMonth.plusMonths(1);
 
 				String monthName = Month.of(monthFinal).getDisplayName(TextStyle.FULL, Locale.GERMAN);
-				
+
 				// Collect all players from all clans
 				ArrayList<Player> allPlayers = new ArrayList<>();
 				for (String clantag : clansListFinal) {
@@ -219,11 +221,12 @@ public class winsfails extends ListenerAdapter {
 
 				int currentPlayer = 0;
 				int totalPlayers = playersToProcess.size();
-				
+
 				for (Player p : playersToProcess) {
 					currentPlayer++;
-					
-					// Update progress message (every 5 players or on last player to avoid rate limiting)
+
+					// Update progress message (every 5 players or on last player to avoid rate
+					// limiting)
 					if (currentPlayer % 5 == 0 || currentPlayer == totalPlayers) {
 						try {
 							event.getHook()
@@ -248,8 +251,9 @@ public class winsfails extends ListenerAdapter {
 				for (String clantag : clansListFinal) {
 					Clan c = new Clan(clantag);
 					String clanDisplay = c.getInfoStringDB();
-					
-					String desc = "## Eine Liste aller Spieler aus " + clanDisplay + ", welche unter " + threshold + " Wins im " + monthName + " "
+
+					String desc = "## Eine Liste aller Spieler aus " + clanDisplay + ", welche unter " + threshold
+							+ " Wins im " + monthName + " "
 							+ yearFinal + " haben.\n";
 
 					if (addkp) {
@@ -258,6 +262,7 @@ public class winsfails extends ListenerAdapter {
 
 					boolean listempty = true;
 					ArrayList<Player> playerdonewrong = new ArrayList<>();
+					ArrayList<String> signedOffPlayers = new ArrayList<>();
 
 					// Filter players for this specific clan
 					for (Player p : allPlayers) {
@@ -276,6 +281,12 @@ public class winsfails extends ListenerAdapter {
 						}
 
 						String playertag = p.getTag();
+
+						// Skip signed-off players
+						if (MemberSignoff.isSignedOff(playertag)) {
+							signedOffPlayers.add(MessageUtil.unformat(p.getInfoStringDB()));
+							continue;
+						}
 
 						if (tagToWins.containsKey(playertag)) {
 							int playerWins = tagToWins.get(playertag);
@@ -306,9 +317,14 @@ public class winsfails extends ListenerAdapter {
 						desc += "**Keine Fehler anzuzeigen.**";
 					}
 
+					if (!signedOffPlayers.isEmpty()) {
+						desc += "\n*Abgemeldete Spieler (übersprungen): " + String.join(", ", signedOffPlayers) + "*\n";
+					}
+
 					// Send first clan result as reply, others as separate messages
 					if (isFirstClan) {
-						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO))
+						event.getHook()
+								.editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO))
 								.queue();
 						isFirstClan = false;
 					} else {
@@ -413,7 +429,7 @@ public class winsfails extends ListenerAdapter {
 		}
 		return choices;
 	}
-	
+
 	private List<String> parseClanTags(String input) {
 		List<String> clanTags = new ArrayList<>();
 		if (input == null || input.trim().isEmpty()) {

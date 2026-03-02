@@ -46,6 +46,7 @@ import commands.memberlist.editmember;
 import commands.memberlist.listmembers;
 import commands.memberlist.memberstatus;
 import commands.memberlist.removemember;
+import commands.memberlist.signoff;
 import commands.memberlist.togglemark;
 import commands.memberlist.transfermember;
 import commands.reminders.remindersadd;
@@ -152,7 +153,7 @@ public class Bot extends ListenerAdapter {
 						new kpremove(), new kpedit(), new kpinfo(), new kplistreasons(), new kpclan(), new clanconfig(),
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
 						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(),
-						new checkroles(), new winsfails(), new relink(), new trackchannels())
+						new checkroles(), new winsfails(), new relink(), new trackchannels(), new signoff())
 				.build();
 	}
 
@@ -369,7 +370,20 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "trackchannel", "Der TrackChannel", true)
 									.setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "timestamp",
-									"Der Zeitpunkt (dd.MM.yyyy HH:mm)", true).setAutoComplete(true)))
+									"Der Zeitpunkt (dd.MM.yyyy HH:mm)", true).setAutoComplete(true)),
+					Commands.slash("signoff",
+							"Melde einen Spieler ab (Abwesenheit). Abgemeldete Spieler erhalten keine automatischen Kickpunkte.")
+							.addOptions(new OptionData(OptionType.STRING, "player",
+									"Der Spieler, der ab-/angemeldet werden soll.", true).setAutoComplete(true))
+							.addOptions(new OptionData(OptionType.STRING, "action",
+									"Die Aktion (create, end, extend, info)", true).setAutoComplete(true))
+							.addOptions(new OptionData(OptionType.INTEGER, "days",
+									"(Optional) Dauer der Abmeldung in Tagen. Ohne = unbegrenzt.").setRequired(false))
+							.addOptions(new OptionData(OptionType.STRING, "reason",
+									"(Optional) Grund der Abmeldung.").setRequired(false))
+							.addOptions(new OptionData(OptionType.BOOLEAN, "pings",
+									"(Optional) Soll der Spieler trotzdem Reminder-Pings erhalten? Standard: Nein")
+									.setRequired(false)))
 					.queue();
 		}
 	}
@@ -689,6 +703,12 @@ public class Bot extends ListenerAdapter {
 					// Only ping players with level >= MIN_LEVEL_FOR_PING
 					Integer expLevel = player.getExpLevelAPI();
 					boolean canPing = expLevel != null && expLevel >= MIN_LEVEL_FOR_PING;
+
+					// Skip signed-off players (unless they opted in to pings)
+					if (datawrapper.MemberSignoff.shouldSkipPings(player.getTag())) {
+						continue;
+					}
+
 					if (player.getUser() != null && canPing) {
 						String userId = player.getUser().getUserID();
 						if (decksUsed == null) {

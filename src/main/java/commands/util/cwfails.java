@@ -12,6 +12,7 @@ import commands.kickpoints.kpadd;
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.KickpointReason;
+import datawrapper.MemberSignoff;
 import datawrapper.Player;
 import datawrapper.User;
 import lostcrmanager.Bot;
@@ -45,7 +46,7 @@ public class cwfails extends ListenerAdapter {
 		}
 
 		String clanInput = clanOption.getAsString();
-		
+
 		// Parse comma-separated clan tags
 		List<String> clansList = parseClanTags(clanInput);
 		if (clansList.isEmpty()) {
@@ -55,13 +56,14 @@ public class cwfails extends ListenerAdapter {
 					.queue();
 			return;
 		}
-		
+
 		// Check for waitlist in any clan
 		for (String clantag : clansList) {
 			if (clantag.equals("warteliste")) {
 				event.getHook()
 						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Diesen Befehl kannst du nicht auf die Warteliste ausführen.", MessageUtil.EmbedType.ERROR))
+								"Diesen Befehl kannst du nicht auf die Warteliste ausführen.",
+								MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -133,13 +135,13 @@ public class cwfails extends ListenerAdapter {
 			Clan c = new Clan(clantag);
 			if (!c.ExistsDB()) {
 				event.getHook()
-						.editOriginalEmbeds(MessageUtil.buildEmbed(title, 
+						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
 								"Clan " + clantag + " existiert nicht.", MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
 		}
-		
+
 		final KickpointReason kpreasontemp = kpreason;
 		final List<String> clansListFinal = clansList;
 		final Integer minThresholdFinal = minThreshold;
@@ -161,13 +163,15 @@ public class cwfails extends ListenerAdapter {
 				Clan c = new Clan(clansListFinal.get(0));
 				clanDisplay = c.getInfoStringDB();
 			} else {
-				clanDisplay = clansListFinal.size() + " Clans (" + 
-					String.join(", ", clansListFinal.stream()
-						.map(tag -> new Clan(tag).getNameDB())
-						.toArray(String[]::new)) + ")";
+				clanDisplay = clansListFinal.size() + " Clans (" +
+						String.join(", ", clansListFinal.stream()
+								.map(tag -> new Clan(tag).getNameDB())
+								.toArray(String[]::new))
+						+ ")";
 			}
 
-			String desc = "## Eine Liste aller Spieler aus " + clanDisplay + ", welche unter " + threshold + " Punkte im CW haben.\n";
+			String desc = "## Eine Liste aller Spieler aus " + clanDisplay + ", welche unter " + threshold
+					+ " Punkte im CW haben.\n";
 
 			if (addkp) {
 				desc += "### Da ein Kickpunkt-Grund ausgewählt wurde, wird dieser auf jeden Spieler der Liste angewandt.\n";
@@ -192,6 +196,7 @@ public class cwfails extends ListenerAdapter {
 			}
 
 			ArrayList<Player> playerdonewrong = new ArrayList<>();
+			ArrayList<String> signedOffPlayers = new ArrayList<>();
 
 			for (Player p : allClanPlayers) {
 				String playertag = p.getTag();
@@ -203,6 +208,12 @@ public class cwfails extends ListenerAdapter {
 							|| role == Player.RoleType.COLEADER) {
 						continue;
 					}
+				}
+
+				// Skip signed-off players
+				if (MemberSignoff.isSignedOff(playertag)) {
+					signedOffPlayers.add(MessageUtil.unformat(p.getInfoStringDB()));
+					continue;
 				}
 
 				if (tagtocwfame.containsKey(playertag)) {
@@ -261,6 +272,10 @@ public class cwfails extends ListenerAdapter {
 							playerdonewrong.add(p);
 					}
 				}
+			}
+
+			if (!signedOffPlayers.isEmpty()) {
+				desc += "\n*Abgemeldete Spieler (übersprungen): " + String.join(", ", signedOffPlayers) + "*\n";
 			}
 
 			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO)).queue();
