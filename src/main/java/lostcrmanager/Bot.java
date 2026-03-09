@@ -47,6 +47,7 @@ import commands.memberlist.listmembers;
 import commands.memberlist.memberstatus;
 import commands.memberlist.removemember;
 import commands.memberlist.signoff;
+import commands.memberlist.signofflist;
 import commands.memberlist.togglemark;
 import commands.memberlist.transfermember;
 import commands.reminders.remindersadd;
@@ -153,7 +154,8 @@ public class Bot extends ListenerAdapter {
 						new kpremove(), new kpedit(), new kpinfo(), new kplistreasons(), new kpclan(), new clanconfig(),
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
 						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(),
-						new checkroles(), new winsfails(), new relink(), new trackchannels(), new signoff())
+						new checkroles(), new winsfails(), new relink(), new trackchannels(), new signoff(),
+						new signofflist())
 				.build();
 	}
 
@@ -383,7 +385,14 @@ public class Bot extends ListenerAdapter {
 									"(Optional) Grund der Abmeldung.").setRequired(false))
 							.addOptions(new OptionData(OptionType.BOOLEAN, "pings",
 									"(Optional) Soll der Spieler trotzdem Reminder-Pings erhalten? Standard: Nein")
-									.setRequired(false)))
+									.setRequired(false)),
+					Commands.slash("signofflist",
+							"Zeige alle Abmeldungen für einen bestimmten Monat an.")
+							.addOptions(new OptionData(OptionType.STRING, "month",
+									"Der Monat, für den die Abmeldungen angezeigt werden sollen.", true)
+									.setAutoComplete(true))
+							.addOptions(new OptionData(OptionType.BOOLEAN, "showreasons",
+									"(Optional) Zeige Begründungen an.").setRequired(false)))
 					.queue();
 		}
 	}

@@ -77,19 +77,15 @@ public class winsfails extends ListenerAdapter {
 			}
 		}
 
-		// Check permissions for all clans
+		// Check permissions
 		User userexecuted = new User(event.getUser().getId());
-		for (String clantag : clansList) {
-			if (!(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-					|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-					|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
-				event.getHook()
-						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Du musst mindestens Vize-Anführer aller angegebenen Clans sein, um diesen Befehl ausführen zu können.",
-								MessageUtil.EmbedType.ERROR))
-						.queue();
-				return;
-			}
+		if (!userexecuted.isColeaderOrHigher()) {
+			event.getHook()
+					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
+							MessageUtil.EmbedType.ERROR))
+					.queue();
+			return;
 		}
 
 		int threshold = thresholdOption.getAsInt();

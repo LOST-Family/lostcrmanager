@@ -8,7 +8,6 @@ import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Clan;
 import datawrapper.KickpointReason;
-import datawrapper.Player;
 import datawrapper.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -41,16 +40,15 @@ public class kpremovereason extends ListenerAdapter {
 		Clan clan = new Clan(clantag);
 
 		User userexecuted = new User(event.getUser().getId());
-		if (!(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
+		if (!userexecuted.isColeaderOrHigher()) {
 			event.getHook()
-			.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-					"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
-					MessageUtil.EmbedType.ERROR)).queue();
+					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
+							MessageUtil.EmbedType.ERROR))
+					.queue();
 			return;
 		}
-		
+
 		if (!clan.ExistsDB()) {
 			event.getHook()
 					.editOriginalEmbeds(
@@ -59,15 +57,16 @@ public class kpremovereason extends ListenerAdapter {
 			return;
 		}
 
-		if(clantag.equals("warteliste")) {
+		if (clantag.equals("warteliste")) {
 			event.getHook().editOriginalEmbeds(
-					MessageUtil.buildEmbed(title, "Diesen Befehl kannst du nicht auf die Warteliste ausführen.", MessageUtil.EmbedType.ERROR))
+					MessageUtil.buildEmbed(title, "Diesen Befehl kannst du nicht auf die Warteliste ausführen.",
+							MessageUtil.EmbedType.ERROR))
 					.queue();
 			return;
 		}
-		
+
 		KickpointReason kpreason = new KickpointReason(reason, clantag);
-		
+
 		if (!kpreason.Exists()) {
 			event.getHook().editOriginalEmbeds(
 					MessageUtil.buildEmbed(title, "Diese Begründung existiert nicht.", MessageUtil.EmbedType.ERROR))
@@ -76,7 +75,6 @@ public class kpremovereason extends ListenerAdapter {
 		}
 
 		DBUtil.executeUpdate("DELETE FROM kickpoint_reasons WHERE name = ? AND clan_tag = ?", reason, clantag);
-
 
 		String desc = "Der Kickpunkt-Grund wurde als Vorlage gelöscht.\n";
 		desc += "Grund: " + reason + "\n";

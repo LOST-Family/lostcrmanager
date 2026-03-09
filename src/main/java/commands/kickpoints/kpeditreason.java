@@ -8,7 +8,6 @@ import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Clan;
 import datawrapper.KickpointReason;
-import datawrapper.Player;
 import datawrapper.User;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -45,12 +44,10 @@ public class kpeditreason extends ListenerAdapter {
 		Clan c = new Clan(clantag);
 
 		User userexecuted = new User(event.getUser().getId());
-		if (!(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
+		if (!userexecuted.isColeaderOrHigher()) {
 			event.getHook()
 					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-							"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
 							MessageUtil.EmbedType.ERROR))
 					.queue();
 			return;

@@ -5,6 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
 
 import datautil.Connection;
 import datautil.DBUtil;
@@ -23,6 +26,17 @@ public class MemberSignoff {
     public MemberSignoff(String playerTag) {
         this.playerTag = playerTag;
         loadFromDB();
+    }
+
+    private MemberSignoff(ResultSet rs) throws SQLException {
+        this.id = rs.getLong("id");
+        this.playerTag = rs.getString("player_tag");
+        this.startDate = rs.getTimestamp("start_date");
+        this.endDate = rs.getTimestamp("end_date");
+        this.reason = rs.getString("reason");
+        this.createdByDiscordId = rs.getString("created_by_discord_id");
+        this.createdAt = rs.getTimestamp("created_at");
+        this.receivePings = rs.getBoolean("receive_pings");
     }
 
     private void loadFromDB() {
@@ -134,8 +148,38 @@ public class MemberSignoff {
     }
 
     public static void remove(String playerTag) {
-        String sql = "DELETE FROM member_signoffs WHERE player_tag = ?";
+        String sql = "UPDATE member_signoffs SET end_date = NOW() WHERE player_tag = ? AND (end_date IS NULL OR end_date > NOW())";
         DBUtil.executeUpdate(sql, playerTag);
+    }
+
+    /**
+     * Returns all signoffs that overlap with the given month.
+     * A signoff overlaps if it started before the end of the month AND
+     * (has no end date OR ended on/after the start of the month).
+     */
+    public static List<MemberSignoff> getSignoffsForMonth(int year, int month) {
+        YearMonth ym = YearMonth.of(year, month);
+        Timestamp monthStart = Timestamp.valueOf(ym.atDay(1).atStartOfDay());
+        Timestamp monthEnd = Timestamp.valueOf(ym.plusMonths(1).atDay(1).atStartOfDay());
+
+        String sql = "SELECT id, player_tag, start_date, end_date, reason, created_by_discord_id, created_at, receive_pings "
+                + "FROM member_signoffs "
+                + "WHERE start_date < ? AND (end_date IS NULL OR end_date >= ?) "
+                + "ORDER BY start_date ASC";
+
+        List<MemberSignoff> results = new ArrayList<>();
+        try (PreparedStatement pstmt = Connection.getConnection().prepareStatement(sql)) {
+            pstmt.setTimestamp(1, monthEnd);
+            pstmt.setTimestamp(2, monthStart);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    results.add(new MemberSignoff(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return results;
     }
 
     public void update(Timestamp newEndDate) {

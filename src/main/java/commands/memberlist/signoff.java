@@ -22,7 +22,6 @@ import util.MessageUtil;
 
 public class signoff extends ListenerAdapter {
 
-    @SuppressWarnings("null")
     @Override
     public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("signoff"))
@@ -55,15 +54,12 @@ public class signoff extends ListenerAdapter {
             }
 
             Clan c = p.getClanDB();
-            String clantag = c.getTag();
 
             User userExecuted = new User(event.getUser().getId());
-            if (!(userExecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-                    || userExecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-                    || userExecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
+            if (!userExecuted.isColeaderOrHigher()) {
                 event.getHook()
                         .editOriginalEmbeds(MessageUtil.buildEmbed(title,
-                                "Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+                                "Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
                                 MessageUtil.EmbedType.ERROR))
                         .queue();
                 return;

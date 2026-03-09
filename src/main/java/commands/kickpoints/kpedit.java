@@ -11,9 +11,7 @@ import java.time.format.DateTimeParseException;
 import javax.annotation.Nonnull;
 
 import datautil.DBUtil;
-import datawrapper.Clan;
 import datawrapper.Kickpoint;
-import datawrapper.Player;
 import datawrapper.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -47,20 +45,14 @@ public class kpedit extends ListenerAdapter {
 
 		Kickpoint kp = new Kickpoint(id);
 
-		Clan c = kp.getPlayer().getClanDB();
-		
-		String clantag = c.getTag();
-		
 		User userexecuted = new User(event.getUser().getId());
-		if (!(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
+		if (!userexecuted.isColeaderOrHigher()) {
 			event.replyEmbeds(MessageUtil.buildEmbed(title,
-					"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+					"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
 					MessageUtil.EmbedType.ERROR)).queue();
 			return;
 		}
-		
+
 		String desc = "";
 
 		if (kp.getDescription() != null) {

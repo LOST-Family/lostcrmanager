@@ -73,11 +73,9 @@ public class kpadd extends ListenerAdapter {
 		}
 
 		User userexecuted = new User(event.getUser().getId());
-		if (!(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-				|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
+		if (!userexecuted.isColeaderOrHigher()) {
 			event.replyEmbeds(MessageUtil.buildEmbed(title,
-					"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
+					"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
 					MessageUtil.EmbedType.ERROR)).queue();
 			return;
 		}
