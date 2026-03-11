@@ -74,6 +74,12 @@ public class LinkWebServer {
 				// Link endpoint
 				server.createContext("/api/link", new LinkRequestHandler());
 
+				// Search linked players endpoint (for autocomplete)
+				server.createContext("/api/search-linked", new SearchLinkedHandler());
+
+				// Remove player endpoint
+				server.createContext("/api/remove", new RemovePlayerHandler());
+
 				System.out.println("[LinkAPI] Starting server on port " + port + "...");
 
 				// Start the server
@@ -369,6 +375,203 @@ public class LinkWebServer {
 
 			} catch (Exception e) {
 				System.err.println("[LinkAPI] Error handling link request: " + e.getMessage());
+				e.printStackTrace();
+				JSONObject error = new JSONObject();
+				error.put("success", false);
+				error.put("error", "Internal server error");
+				sendJsonResponse(exchange, 500, error);
+			}
+		}
+	}
+
+	/**
+	 * Handler for GET /api/search-linked?q=&lt;query&gt;
+	 * Returns linked players matching the query for autocomplete.
+	 */
+	private static class SearchLinkedHandler implements HttpHandler {
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			System.out.println("[LinkAPI] Search-linked request from " + exchange.getRemoteAddress());
+
+			try {
+				if (!"GET".equals(exchange.getRequestMethod())) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Method not allowed");
+					sendJsonResponse(exchange, 405, error);
+					return;
+				}
+
+				if (!validateAuth(exchange)) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Missing or invalid Authorization header");
+					sendJsonResponse(exchange, 401, error);
+					return;
+				}
+
+				// Parse query parameter
+				String rawQuery = exchange.getRequestURI().getRawQuery();
+				String q = "";
+				if (rawQuery != null) {
+					for (String param : rawQuery.split("&")) {
+						String[] kv = param.split("=", 2);
+						if (kv.length == 2 && "q".equals(kv[0])) {
+							q = java.net.URLDecoder.decode(kv[1], StandardCharsets.UTF_8);
+							break;
+						}
+					}
+				}
+
+				final String query = q.toLowerCase();
+
+				String sql = "SELECT players.cr_tag AS tag, players.name AS player_name, clans.name AS clan_name "
+						+ "FROM players "
+						+ "LEFT JOIN clan_members ON clan_members.player_tag = players.cr_tag "
+						+ "LEFT JOIN clans ON clans.tag = clan_members.clan_tag";
+
+				org.json.JSONArray results = new org.json.JSONArray();
+
+				try (java.sql.PreparedStatement pstmt = datautil.Connection.getConnection().prepareStatement(sql)) {
+					try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+						while (rs.next() && results.length() < 25) {
+							String tag = rs.getString("tag");
+							String playerName = rs.getString("player_name");
+							String clanName = rs.getString("clan_name");
+
+							String display = (playerName != null ? playerName : tag) + " (" + tag + ")";
+							if (clanName != null && !clanName.isEmpty()) {
+								display += " - " + clanName;
+							}
+
+							if (display.toLowerCase().contains(query)
+									|| tag.toLowerCase().startsWith(query)) {
+								JSONObject entry = new JSONObject();
+								entry.put("tag", tag);
+								entry.put("name", playerName != null ? playerName : "");
+								entry.put("clan", clanName != null ? clanName : "");
+								entry.put("display", display);
+								results.put(entry);
+							}
+						}
+					}
+				} catch (java.sql.SQLException e) {
+					System.err.println("[LinkAPI] DB error in SearchLinkedHandler: " + e.getMessage());
+					e.printStackTrace();
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Database error");
+					sendJsonResponse(exchange, 500, error);
+					return;
+				}
+
+				JSONObject response = new JSONObject();
+				response.put("success", true);
+				response.put("players", results);
+				sendJsonResponse(exchange, 200, response);
+
+			} catch (Exception e) {
+				System.err.println("[LinkAPI] Error in SearchLinkedHandler: " + e.getMessage());
+				e.printStackTrace();
+				JSONObject error = new JSONObject();
+				error.put("success", false);
+				error.put("error", "Internal server error");
+				sendJsonResponse(exchange, 500, error);
+			}
+		}
+	}
+
+	/**
+	 * Handler for POST /api/remove
+	 * Removes a player's clan membership and link.
+	 */
+	private static class RemovePlayerHandler implements HttpHandler {
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			System.out.println("[LinkAPI] Remove request from " + exchange.getRemoteAddress());
+
+			try {
+				if (!"POST".equals(exchange.getRequestMethod())) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Method not allowed");
+					sendJsonResponse(exchange, 405, error);
+					return;
+				}
+
+				if (!validateAuth(exchange)) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Missing or invalid Authorization header");
+					sendJsonResponse(exchange, 401, error);
+					return;
+				}
+
+				String body = readRequestBody(exchange);
+				if (body == null || body.trim().isEmpty()) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Request body is required");
+					sendJsonResponse(exchange, 400, error);
+					return;
+				}
+
+				JSONObject requestData;
+				try {
+					requestData = new JSONObject(body);
+				} catch (Exception e) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Invalid JSON in request body");
+					sendJsonResponse(exchange, 400, error);
+					return;
+				}
+
+				String tag = requestData.optString("tag", null);
+				if (tag == null || tag.trim().isEmpty()) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Missing required parameter: tag");
+					sendJsonResponse(exchange, 400, error);
+					return;
+				}
+
+				if (!tag.startsWith("#")) {
+					tag = "#" + tag;
+				}
+				tag = tag.toUpperCase();
+
+				final String finalTag = tag;
+				Player p = new Player(finalTag);
+
+				if (!p.IsLinked()) {
+					JSONObject error = new JSONObject();
+					error.put("success", false);
+					error.put("error", "Player is not linked");
+					error.put("tag", finalTag);
+					sendJsonResponse(exchange, 404, error);
+					return;
+				}
+
+				String playerName = p.getNameDB();
+
+				// Remove clan membership
+				datautil.DBUtil.executeUpdate("DELETE FROM clan_members WHERE player_tag = ?", finalTag);
+
+				// Remove player link
+				datautil.DBUtil.executeUpdate("DELETE FROM players WHERE cr_tag = ?", finalTag);
+
+				System.out.println("[LinkAPI] Successfully removed player " + finalTag + " (" + playerName + ")");
+
+				JSONObject response = new JSONObject();
+				response.put("success", true);
+				response.put("tag", finalTag);
+				response.put("playerName", playerName != null ? playerName : "");
+				response.put("message", "Player successfully removed");
+				sendJsonResponse(exchange, 200, response);
+
+			} catch (Exception e) {
+				System.err.println("[LinkAPI] Error in RemovePlayerHandler: " + e.getMessage());
 				e.printStackTrace();
 				JSONObject error = new JSONObject();
 				error.put("success", false);
