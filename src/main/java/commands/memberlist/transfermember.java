@@ -80,25 +80,14 @@ public class transfermember extends ListenerAdapter {
 
 			User userexecuted = new User(event.getUser().getId());
 			if (!clantag.equals("warteliste")) {
-				if (!(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-						|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-						|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER)) {
+				if (!userexecuted.isColeaderOrHigherInClan(clantag)) {
 					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Du musst mindestens Vize-Anführer des Clans sein, in dem der Spieler gerade ist, um diesen Befehl ausführen zu können.",
 							MessageUtil.EmbedType.ERROR)).queue();
 					return;
 				}
 			} else {
-				boolean b = false;
-				for (String clantags : DBManager.getAllClans()) {
-					if (userexecuted.getClanRoles().get(clantags) == Player.RoleType.ADMIN
-							|| userexecuted.getClanRoles().get(clantags) == Player.RoleType.LEADER
-							|| userexecuted.getClanRoles().get(clantags) == Player.RoleType.COLEADER) {
-						b = true;
-						break;
-					}
-				}
-				if (b == false) {
+				if (!userexecuted.isColeaderOrHigher()) {
 					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
 							MessageUtil.EmbedType.ERROR)).queue();
@@ -107,25 +96,14 @@ public class transfermember extends ListenerAdapter {
 			}
 
 			if (!newclantag.equals("warteliste")) {
-				if (!(userexecuted.getClanRoles().get(newclantag) == Player.RoleType.ADMIN
-						|| userexecuted.getClanRoles().get(newclantag) == Player.RoleType.LEADER
-						|| userexecuted.getClanRoles().get(newclantag) == Player.RoleType.COLEADER)) {
+				if (!userexecuted.isColeaderOrHigherInClan(newclantag)) {
 					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Du musst mindestens Vize-Anführer des Clans sein, in den du den Spieler transferieren möchtest, um diesen Befehl ausführen zu können.",
 							MessageUtil.EmbedType.ERROR)).queue();
 					return;
 				}
 			} else {
-				boolean b = false;
-				for (String clantags : DBManager.getAllClans()) {
-					if (userexecuted.getClanRoles().get(clantags) == Player.RoleType.ADMIN
-							|| userexecuted.getClanRoles().get(clantags) == Player.RoleType.LEADER
-							|| userexecuted.getClanRoles().get(clantags) == Player.RoleType.COLEADER) {
-						b = true;
-						break;
-					}
-				}
-				if (b == false) {
+				if (!userexecuted.isColeaderOrHigher()) {
 					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
 							MessageUtil.EmbedType.ERROR)).queue();

@@ -106,6 +106,13 @@ public class User {
 		return clanroles;
 	}
 
+	public boolean isColeaderOrHigherInClan(String clantag) {
+		Player.RoleType role = getClanRoles().get(clantag);
+		return role == Player.RoleType.ADMIN
+				|| role == Player.RoleType.LEADER
+				|| role == Player.RoleType.COLEADER;
+	}
+
 	public boolean isColeaderOrHigher() {
 		if (isAdmin())
 			return true;

@@ -3,7 +3,6 @@ package commands.links;
 import javax.annotation.Nonnull;
 
 import commands.wins.wins;
-import datautil.DBManager;
 import datautil.DBUtil;
 import datawrapper.Player;
 import datawrapper.User;
@@ -22,17 +21,8 @@ public class link extends ListenerAdapter {
 		event.deferReply().queue();
 		String title = "User-Link";
 
-		boolean b = false;
 		User userexecuted = new User(event.getUser().getId());
-		for (String clantag : DBManager.getAllClans()) {
-			if (userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-					|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER
-					|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.COLEADER) {
-				b = true;
-				break;
-			}
-		}
-		if (b == false) {
+		if (!userexecuted.isColeaderOrHigher()) {
 			event.getHook()
 					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
