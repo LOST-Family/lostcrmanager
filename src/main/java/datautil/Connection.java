@@ -30,7 +30,7 @@ public class Connection {
 			} else {
 				return false;
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			System.out.println("Verbindungsfehler: " + e.getMessage());
 			return false;
 		}
@@ -50,7 +50,7 @@ public class Connection {
 		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
 			DatabaseMetaData dbm = conn.getMetaData();
 
-			for (String tableName : tableNames) {
+			for (final String tableName : tableNames) {
 				try (ResultSet tables = dbm.getTables(null, null, tableName, null)) {
 					if (tables.next()) {
 						System.out.println("Tabelle '" + tableName + "' existiert schon.");
@@ -58,50 +58,41 @@ public class Connection {
 						System.out.println("Tabelle '" + tableName + "' existiert nicht. Erstelle sie jetzt...");
 						String createTableSQL = null;
 						switch (tableName) {
-							case "clans":
+							case "clans" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (tag TEXT PRIMARY KEY," + "name TEXT,"
 										+ "index BIGINT," + "guild_id CHARACTER VARYING(19),"
 										+ "leader_roleid CHARACTER VARYING(19),"
 										+ "coleader_roleid CHARACTER VARYING(19),"
 										+ "elder_roleid CHARACTER VARYING(19),"
 										+ "member_roleid CHARACTER VARYING(19))";
-								break;
-							case "users":
+							case "users" ->
 								createTableSQL = "CREATE TABLE " + tableName
 										+ " (discord_id CHARACTER VARYING(19) PRIMARY KEY," + "is_admin BOOLEAN)";
-								break;
-							case "players":
+							case "players" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (cr_tag TEXT PRIMARY KEY,"
 										+ "discord_id CHARACTER VARYING(19), name TEXT)";
-								break;
-							case "clan_members":
+							case "clan_members" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (player_tag TEXT PRIMARY KEY,"
 										+ "clan_tag TEXT," + "clan_role TEXT)";
-								break;
-							case "clan_settings":
+							case "clan_settings" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (clan_tag TEXT PRIMARY KEY,"
 										+ "max_kickpoints BIGINT," + "kickpoints_expire_after_days SMALLINT)";
-								break;
-							case "kickpoint_reasons":
+							case "kickpoint_reasons" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (name TEXT," + "clan_tag text,"
 										+ "amount SMALLINT," + "PRIMARY KEY (name, clan_tag))";
-								break;
-							case "kickpoints":
+							case "kickpoints" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (id BIGINT PRIMARY KEY,"
 										+ "player_tag CHARACTER VARYING(19)," + "date TIMESTAMPTZ," + "amount BIGINT,"
 										+ "description CHARACTER VARYING(100),"
 										+ "created_by_discord_id CHARACTER VARYING(19)," + "created_at TIMESTAMPTZ,"
 										+ "expires_at TIMESTAMPTZ)";
-								break;
-							case "reminders":
+							case "reminders" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (id BIGINT PRIMARY KEY,"
 										+ "clantag TEXT," + "channelid TEXT," + "time TIME," + "last_sent_date DATE)";
-								break;
-							case "player_wins":
+							case "player_wins" ->
 								createTableSQL = "CREATE TABLE " + tableName + " (player_tag TEXT,"
 										+ "recorded_at TIMESTAMPTZ," + "wins INTEGER,"
 										+ "PRIMARY KEY (player_tag, recorded_at))";
-								break;
 						}
 
 						try (Statement stmt = conn.createStatement()) {
@@ -112,8 +103,8 @@ public class Connection {
 
 				}
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+		} catch (final SQLException e) {
+			System.out.println(e.getMessage());
 		}
 
 	}
@@ -150,9 +141,9 @@ public class Connection {
 					System.out.println("Column 'weekday' already exists in reminders table.");
 				}
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			System.err.println("Error migrating reminders table: " + e.getMessage());
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 	}
 
@@ -173,9 +164,9 @@ public class Connection {
 					System.out.println("Column 'note' already exists in clan_members table.");
 				}
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			System.err.println("Error migrating clan_members table: " + e.getMessage());
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 	}
 
@@ -196,9 +187,9 @@ public class Connection {
 					System.out.println("Column 'index' already exists in kickpoint_reasons table.");
 				}
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			System.err.println("Error migrating kickpoint_reasons table: " + e.getMessage());
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 	}
 

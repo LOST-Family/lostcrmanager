@@ -64,8 +64,6 @@ import datautil.APIUtil;
 import datautil.DBUtil;
 import datawrapper.Clan;
 import datawrapper.Player;
-import webserver.LinkWebServer;
-import webserver.api.RestApiServer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -81,6 +79,8 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import webserver.LinkWebServer;
+import webserver.api.RestApiServer;
 
 public class Bot extends ListenerAdapter {
 
@@ -127,16 +127,15 @@ public class Bot extends ListenerAdapter {
 		int restPort = 8070;
 		try {
 			restPort = Integer.parseInt(System.getenv().getOrDefault("REST_API_PORT", "8060"));
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			System.err.println("Invalid REST_API_PORT, using default 8060");
 		}
 		try {
 			restApiServer = new RestApiServer(restPort);
 			restApiServer.start();
 			System.out.println("RestApiServer started on port " + restPort);
-		} catch (Exception e) {
+		} catch (final java.io.IOException e) {
 			System.err.println("Failed to start RestApiServer: " + e.getMessage());
-			e.printStackTrace();
 		}
 
 		startNameUpdates();
@@ -379,6 +378,8 @@ public class Bot extends ListenerAdapter {
 									"Der Spieler, der ab-/angemeldet werden soll.", true).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.STRING, "action",
 									"Die Aktion (create, end, extend, info)", true).setAutoComplete(true))
+							.addOptions(new OptionData(OptionType.STRING, "startdate",
+									"(Optional) Startdatum (DD.MM.YYYY). Ohne = sofort.").setRequired(false).setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.INTEGER, "days",
 									"(Optional) Dauer der Abmeldung in Tagen. Ohne = unbegrenzt.").setRequired(false))
 							.addOptions(new OptionData(OptionType.STRING, "reason",
@@ -410,7 +411,7 @@ public class Bot extends ListenerAdapter {
 		if (restApiServer != null) {
 			try {
 				restApiServer.stop();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				System.err.println("Error stopping RestApiServer: " + e.getMessage());
 			}
 		}
@@ -438,7 +439,7 @@ public class Bot extends ListenerAdapter {
 				if (folder.exists() && folder.isDirectory()) {
 					File[] files = folder.listFiles();
 					if (files != null) {
-						for (File file : files) {
+						for (final File file : files) {
 							Matcher matcher = pattern.matcher(file.getName());
 							if (matcher.matches()) {
 								long millis = Long.parseLong(matcher.group(1));
@@ -480,7 +481,7 @@ public class Bot extends ListenerAdapter {
 						Clan clan = new Clan(clanTag);
 						String description = clan.getDescriptionAPI();
 						DBUtil.executeUpdate("UPDATE clans SET description = ? WHERE tag = ?", description, clanTag);
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						System.out.println(
 								"Fehler beim Badge/Description Update von Clan " + clanTag + ": " + e.getMessage());
 					}
@@ -494,11 +495,9 @@ public class Bot extends ListenerAdapter {
 								getJda().getGuildById(guild_id).retrieveMemberById(id).submit().get()
 										.getEffectiveName(),
 								id);
-					} catch (Exception e) {
+					} catch (final InterruptedException | java.util.concurrent.ExecutionException e) {
 						if (e.getMessage().contains("Unknown Member")) {
-							continue;
 						}
-						System.out.println("Fehler beim Namenupdate von ID " + id + "; Error: " + e.getMessage());
 					}
 				}
 
@@ -507,7 +506,7 @@ public class Bot extends ListenerAdapter {
 					try {
 						Player p = new Player(tag);
 						DBUtil.executeUpdate("UPDATE players SET name = ? WHERE cr_tag = ?", p.getNameAPI(), tag);
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						System.out.println(
 								"Beim Updaten des Namens von Spieler mit Tag " + tag + " ist ein Fehler aufgetreten.");
 					}
@@ -571,7 +570,7 @@ public class Bot extends ListenerAdapter {
 						}
 					}
 				}
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				System.err
 						.println("Fehler beim Updaten des Channel-Namens für " + tc.getName() + ": " + e.getMessage());
 			}
@@ -619,8 +618,7 @@ public class Bot extends ListenerAdapter {
 					}
 				}
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+		} catch (final SQLException e) {
 		}
 	}
 
@@ -629,24 +627,16 @@ public class Bot extends ListenerAdapter {
 			return false;
 		}
 		String normalized = weekdayString.toLowerCase();
-		switch (normalized) {
-			case "monday":
-				return dayOfWeek == DayOfWeek.MONDAY;
-			case "tuesday":
-				return dayOfWeek == DayOfWeek.TUESDAY;
-			case "wednesday":
-				return dayOfWeek == DayOfWeek.WEDNESDAY;
-			case "thursday":
-				return dayOfWeek == DayOfWeek.THURSDAY;
-			case "friday":
-				return dayOfWeek == DayOfWeek.FRIDAY;
-			case "saturday":
-				return dayOfWeek == DayOfWeek.SATURDAY;
-			case "sunday":
-				return dayOfWeek == DayOfWeek.SUNDAY;
-			default:
-				return false;
-		}
+		return switch (normalized) {
+			case "monday" -> dayOfWeek == DayOfWeek.MONDAY;
+			case "tuesday" -> dayOfWeek == DayOfWeek.TUESDAY;
+			case "wednesday" -> dayOfWeek == DayOfWeek.WEDNESDAY;
+			case "thursday" -> dayOfWeek == DayOfWeek.THURSDAY;
+			case "friday" -> dayOfWeek == DayOfWeek.FRIDAY;
+			case "saturday" -> dayOfWeek == DayOfWeek.SATURDAY;
+			case "sunday" -> dayOfWeek == DayOfWeek.SUNDAY;
+			default -> false;
+		};
 	}
 
 	@SuppressWarnings("null")
@@ -687,7 +677,7 @@ public class Bot extends ListenerAdapter {
 			// Get database memberlist and set decksUsed for each player
 			ArrayList<Player> playersWithDecksUsed = new ArrayList<>();
 			ArrayList<Player> dbMembers = clan.getPlayersDB();
-			for (Player player : dbMembers) {
+			for (final Player player : dbMembers) {
 				String playerTag = player.getTag();
 				if (apiDecksUsedMap.containsKey(playerTag)) {
 					// Player is in clan, set their decks used
@@ -701,7 +691,7 @@ public class Bot extends ListenerAdapter {
 
 			// Iterate through players to create reminder list
 			ArrayList<String> reminderList = new ArrayList<>();
-			for (Player player : playersWithDecksUsed) {
+			for (final Player player : playersWithDecksUsed) {
 				Integer decksUsed = player.getDecksUsed();
 				// Include players not in clan (decksUsed == null) or with <4 decks
 				if (decksUsed == null || decksUsed < 4) {
@@ -749,10 +739,10 @@ public class Bot extends ListenerAdapter {
 						// Build messages with split logic
 						ArrayList<String> messages = new ArrayList<>();
 						StringBuilder currentMessage = new StringBuilder();
-						currentMessage.append("⚠️ **Clan War Reminder - " + clan.getNameDB() + "**\n\n");
+						currentMessage.append("⚠️ **Clan War Reminder - ").append(clan.getNameDB()).append("**\n\n");
 						currentMessage.append("Folgende Spieler haben heute weniger als 4 Decks verwendet:\n\n");
 
-						for (String playerInfo : reminderList) {
+						for (final String playerInfo : reminderList) {
 							String line = "• " + playerInfo + "\n";
 							// Check if adding this line would exceed 1900 characters
 							if (currentMessage.length() + line.length() > 1900) {
@@ -775,9 +765,8 @@ public class Bot extends ListenerAdapter {
 					}
 				}
 			}
-		} catch (Exception e) {
+		} catch (final org.json.JSONException e) {
 			System.err.println("Fehler beim Senden des Reminders für " + clantag + ": " + e.getMessage());
-			e.printStackTrace();
 		}
 	}
 
@@ -816,9 +805,8 @@ public class Bot extends ListenerAdapter {
 				pstmt.executeUpdate();
 				System.out.println("Updated last_sent_date for reminder ID: " + reminderId);
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			System.err.println("Fehler beim Aktualisieren von last_sent_date: " + e.getMessage());
-			e.printStackTrace();
 		}
 	}
 
@@ -839,7 +827,7 @@ public class Bot extends ListenerAdapter {
 		int dayOfMonth = now.getDayOfMonth();
 
 		// Delete data older than a year
-		cleanupOldWinsData(zoneId, now);
+		cleanupOldWinsData(now);
 
 		// Only save on the 1st day of the month (or 2nd day to be safe with timezones)
 		if (dayOfMonth == 1 || dayOfMonth == 2) {
@@ -864,9 +852,8 @@ public class Bot extends ListenerAdapter {
 						}
 					}
 				}
-			} catch (SQLException e) {
+			} catch (final SQLException e) {
 				System.err.println("Fehler beim Prüfen der monatlichen Wins: " + e.getMessage());
-				e.printStackTrace();
 			}
 
 			// Save wins for all players
@@ -876,7 +863,7 @@ public class Bot extends ListenerAdapter {
 		}
 	}
 
-	private static void cleanupOldWinsData(ZoneId zoneId, ZonedDateTime now) {
+	private static void cleanupOldWinsData(ZonedDateTime now) {
 		// Delete data older than 1 year
 		ZonedDateTime oneYearAgo = now.minusYears(1);
 		String deleteSql = "DELETE FROM player_wins WHERE recorded_at < ?";
@@ -886,9 +873,8 @@ public class Bot extends ListenerAdapter {
 			if (deleted > 0) {
 				System.out.println("Alte Wins-Daten gelöscht: " + deleted + " Einträge älter als 1 Jahr.");
 			}
-		} catch (SQLException e) {
+		} catch (final SQLException e) {
 			System.err.println("Fehler beim Löschen alter Wins-Daten: " + e.getMessage());
-			e.printStackTrace();
 		}
 	}
 

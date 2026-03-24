@@ -11,10 +11,10 @@ import java.util.Locale;
 
 import javax.annotation.Nonnull;
 
+import datawrapper.Clan;
 import datawrapper.MemberSignoff;
 import datawrapper.Player;
 import datawrapper.User;
-import datawrapper.Clan;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -56,7 +56,7 @@ public class signofflist extends ListenerAdapter {
                     String[] parts = monthValue.split("-");
                     year = Integer.parseInt(parts[0]);
                     month = Integer.parseInt(parts[1]);
-                } catch (Exception e) {
+                } catch (final NumberFormatException e) {
                     event.getHook().editOriginalEmbeds(
                             MessageUtil.buildEmbed(title,
                                     "Ungültiges Monatsformat. Bitte nutze die Autovervollständigung.",
@@ -119,7 +119,7 @@ public class signofflist extends ListenerAdapter {
         }
 
         List<SignoffData> dataList = new ArrayList<>();
-        for (MemberSignoff s : signoffs) {
+        for (final MemberSignoff s : signoffs) {
             SignoffData d = new SignoffData();
             d.signoff = s;
             Player p = new Player(s.getPlayerTag());
@@ -128,7 +128,11 @@ public class signofflist extends ListenerAdapter {
                 d.playerName = s.getPlayerTag();
             }
             Clan clan = p.getClanDB();
-            d.clanIndex = clan != null && clan.getIndex() != null ? clan.getIndex() : Long.MAX_VALUE;
+            if (clan != null && clan.getIndex() != null) {
+                d.clanIndex = clan.getIndex();
+            } else {
+                d.clanIndex = Long.MAX_VALUE;
+            }
             d.clanName = clan != null && clan.getNameDB() != null ? clan.getNameDB() : "Kein Clan";
             dataList.add(d);
         }
@@ -146,7 +150,7 @@ public class signofflist extends ListenerAdapter {
         StringBuilder desc = new StringBuilder();
         desc.append("### Abmeldungen im ").append(monthName).append(" ").append(year).append("\n\n");
 
-        for (SignoffData d : dataList) {
+        for (final SignoffData d : dataList) {
             MemberSignoff signoff = d.signoff;
 
             desc.append("**").append(MessageUtil.unformat(d.playerName)).append("** (")

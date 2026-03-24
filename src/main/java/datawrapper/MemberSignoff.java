@@ -14,7 +14,7 @@ import datautil.DBUtil;
 
 public class MemberSignoff {
     private Long id;
-    private String playerTag;
+    private final String playerTag;
     private Timestamp startDate;
     private Timestamp endDate; // null = unlimited
     private String reason;
@@ -54,8 +54,7 @@ public class MemberSignoff {
                     this.receivePings = rs.getBoolean("receive_pings");
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (final SQLException e) {
         }
     }
 
@@ -67,12 +66,19 @@ public class MemberSignoff {
         if (!exists()) {
             return false;
         }
+        
+        Timestamp now = Timestamp.from(Instant.now());
+        // Must have started already
+        if (startDate != null && startDate.after(now)) {
+            return false;
+        }
+
         // If end_date is null, it's unlimited/permanent
         if (endDate == null) {
             return true;
         }
         // Otherwise check if current time is before end date
-        return Timestamp.from(Instant.now()).before(endDate);
+        return now.before(endDate);
     }
 
     /**
@@ -80,7 +86,7 @@ public class MemberSignoff {
      * instance. More efficient for quick checks.
      */
     public static boolean isSignedOff(String playerTag) {
-        String sql = "SELECT COUNT(*) FROM member_signoffs WHERE player_tag = ? AND (end_date IS NULL OR end_date > NOW())";
+        String sql = "SELECT COUNT(*) FROM member_signoffs WHERE player_tag = ? AND start_date <= NOW() AND (end_date IS NULL OR end_date > NOW())";
         Long count = null;
         try (PreparedStatement pstmt = Connection.getConnection().prepareStatement(sql)) {
             pstmt.setString(1, playerTag);
@@ -89,8 +95,7 @@ public class MemberSignoff {
                     count = rs.getLong(1);
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (final SQLException e) {
         }
         return count != null && count > 0;
     }
@@ -141,10 +146,10 @@ public class MemberSignoff {
         return exists() && endDate == null;
     }
 
-    public static void create(String playerTag, Timestamp endDate, String reason, String createdByDiscordId,
+    public static void create(String playerTag, Timestamp startDate, Timestamp endDate, String reason, String createdByDiscordId,
             boolean receivePings) {
-        String sql = "INSERT INTO member_signoffs (player_tag, end_date, reason, created_by_discord_id, receive_pings) VALUES (?, ?, ?, ?, ?)";
-        DBUtil.executeUpdate(sql, playerTag, endDate, reason, createdByDiscordId, receivePings);
+        String sql = "INSERT INTO member_signoffs (player_tag, start_date, end_date, reason, created_by_discord_id, receive_pings) VALUES (?, ?, ?, ?, ?, ?)";
+        DBUtil.executeUpdate(sql, playerTag, startDate, endDate, reason, createdByDiscordId, receivePings);
     }
 
     public static void remove(String playerTag) {
@@ -176,8 +181,7 @@ public class MemberSignoff {
                     results.add(new MemberSignoff(rs));
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (final SQLException e) {
         }
         return results;
     }
