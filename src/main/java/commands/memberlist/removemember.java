@@ -40,16 +40,36 @@ public class removemember extends ListenerAdapter {
 			return;
 		}
 
-		String playertag = playeroption.getAsString();
+		String playeroptionStr = playeroption.getAsString().toUpperCase().replace("O", "0");
+
+		java.util.ArrayList<String> playerlist = new java.util.ArrayList<>();
+
+		if (playeroptionStr.contains(",")) {
+			String[] players = playeroptionStr.split(",");
+			for (String t : players) {
+				playerlist.add(t.trim());
+			}
+		} else {
+			playerlist.add(playeroptionStr);
+		}
 
 		new Thread(() -> {
+			boolean firstTime = true;
+			for (String playertag : playerlist) {
 			Player player = new Player(playertag);
 
 			if (!player.IsLinked()) {
-				event.getHook().editOriginalEmbeds(
-						MessageUtil.buildEmbed(title, "Dieser Spieler ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
-						.queue();
-				return;
+				if (firstTime) {
+					event.getHook().editOriginalEmbeds(
+							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
+							.queue();
+					firstTime = false;
+				} else {
+					event.getChannel().sendMessageEmbeds(
+							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
+							.queue();
+				}
+				continue;
 			}
 
 			Player.RoleType role = player.getRole();
@@ -57,10 +77,17 @@ public class removemember extends ListenerAdapter {
 			Clan playerclan = player.getClanDB();
 
 			if (playerclan == null) {
-				event.getHook().editOriginalEmbeds(
-						MessageUtil.buildEmbed(title, "Dieser Spieler ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
-						.queue();
-				return;
+				if (firstTime) {
+					event.getHook().editOriginalEmbeds(
+							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
+							.queue();
+					firstTime = false;
+				} else {
+					event.getChannel().sendMessageEmbeds(
+							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
+							.queue();
+				}
+				continue;
 			}
 
 			String clantag = playerclan.getTag();
@@ -68,35 +95,66 @@ public class removemember extends ListenerAdapter {
 			User userexecuted = new User(event.getUser().getId());
 			if (!clantag.equals("warteliste")) {
 				if (!userexecuted.isColeaderOrHigherInClan(clantag)) {
-					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-							"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
-							MessageUtil.EmbedType.ERROR)).queue();
-					return;
+					if (firstTime) {
+						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
+								"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
+								MessageUtil.EmbedType.ERROR)).queue();
+						firstTime = false;
+					} else {
+						event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title,
+								"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
+								MessageUtil.EmbedType.ERROR)).queue();
+					}
+					continue;
 				}
 			} else {
 				if (!userexecuted.isColeaderOrHigher()) {
-					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-							"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
-							MessageUtil.EmbedType.ERROR)).queue();
-					return;
+					if (firstTime) {
+						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
+								"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
+								MessageUtil.EmbedType.ERROR)).queue();
+						firstTime = false;
+					} else {
+						event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title,
+								"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
+								MessageUtil.EmbedType.ERROR)).queue();
+					}
+					continue;
 				}
 			}
 
 			if (role == Player.RoleType.LEADER && userexecuted.getClanRoles().get(clantag) != Player.RoleType.ADMIN) {
-				event.getHook()
-						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Um jemanden als Leader zu entfernen, musst du Admin sein.", MessageUtil.EmbedType.ERROR))
-						.queue();
-				return;
+				if (firstTime) {
+					event.getHook()
+							.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+									"Um jemanden als Leader zu entfernen, musst du Admin sein (Spieler: " + playertag + ").", MessageUtil.EmbedType.ERROR))
+							.queue();
+					firstTime = false;
+				} else {
+					event.getChannel()
+							.sendMessageEmbeds(MessageUtil.buildEmbed(title,
+									"Um jemanden als Leader zu entfernen, musst du Admin sein (Spieler: " + playertag + ").", MessageUtil.EmbedType.ERROR))
+							.queue();
+				}
+				continue;
 			}
 			if (role == Player.RoleType.COLEADER && !(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
 					|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER)) {
-				event.getHook()
-						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein.",
-								MessageUtil.EmbedType.ERROR))
-						.queue();
-				return;
+				if (firstTime) {
+					event.getHook()
+							.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+									"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein (Spieler: " + playertag + ").",
+									MessageUtil.EmbedType.ERROR))
+							.queue();
+					firstTime = false;
+				} else {
+					event.getChannel()
+							.sendMessageEmbeds(MessageUtil.buildEmbed(title,
+									"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein (Spieler: " + playertag + ").",
+									MessageUtil.EmbedType.ERROR))
+							.queue();
+				}
+				continue;
 			}
 
 			String clanname = playerclan.getNameDB();
@@ -142,7 +200,13 @@ public class removemember extends ListenerAdapter {
 				MessageUtil.sendUserPingHidden(channel, userid);
 			}
 
-			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
+			if (firstTime) {
+				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
+				firstTime = false;
+			} else {
+				event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
+			}
+			} // close for loop
 		}).start();
 
 	}

@@ -43,7 +43,7 @@ public class link extends ListenerAdapter {
 			return;
 		}
 
-		String tag = tagOption.getAsString();
+		String tag = tagOption.getAsString().toUpperCase().replace("O", "0");
 		if (!tag.startsWith("#")) {
 			tag = "#" + tag;
 		}

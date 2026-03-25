@@ -12,11 +12,14 @@ import datautil.DBManager;
 import datawrapper.Player;
 import datawrapper.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import util.MessageUtil;
 
 public class playerinfo extends ListenerAdapter {
@@ -251,6 +254,9 @@ public class playerinfo extends ListenerAdapter {
 				}
 			}
 			
+			Button bellButton = Button.secondary("playerinfo_bell_" + userid, "\u200B")
+					.withEmoji(Emoji.fromUnicode("🔔"));
+
 			// Send response with or without API file
 			// playertag is only set when playerOption is provided, so API file is only available for player lookups
 			if (getApiFileFinal && playertag != null) {
@@ -266,12 +272,14 @@ public class playerinfo extends ListenerAdapter {
 					String filename = (sanitizedTag.isEmpty() ? "player" : sanitizedTag) + "_info.txt";
 					event.getHook().editOriginal(inputStream, filename)
 							.setEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO))
+							.setActionRow(bellButton)
 							.queue();
 					return;
 				}
 			}
 			// Send response without API file (either not requested or API fetch failed)
 			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO))
+					.setActionRow(bellButton)
 					.queue();
 		}).start();
 
@@ -296,6 +304,29 @@ public class playerinfo extends ListenerAdapter {
 				choices.add(new Command.Choice("true", "true"));
 			}
 			event.replyChoices(choices).queue();
+		}
+	}
+
+	@SuppressWarnings("null")
+	@Override
+	public void onButtonInteraction(ButtonInteractionEvent event) {
+		String id = event.getComponentId();
+
+		// Handle bell button - send ping with trash button
+		if (id.startsWith("playerinfo_bell_")) {
+			String userid = id.substring("playerinfo_bell_".length());
+			MessageChannelUnion channel = event.getChannel();
+			MessageUtil.sendUserPingWithDelete(channel, userid);
+			event.deferEdit().queue();
+			return;
+		}
+
+		// Handle trash button - delete the ping message
+		if (id.equals("playerinfo_trash")) {
+			event.deferEdit().queue();
+			event.getMessage().delete().queue(null, _ -> {
+			});
+			return;
 		}
 	}
 

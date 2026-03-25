@@ -45,7 +45,7 @@ public class unlink extends ListenerAdapter {
 			return;
 		}
 
-		String tagoption = tagOption.getAsString();
+		String tagoption = tagOption.getAsString().toUpperCase().replace("O", "0");
 
 		ArrayList<String> taglist = new ArrayList<>();
 

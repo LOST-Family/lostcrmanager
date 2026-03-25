@@ -44,35 +44,66 @@ public class kpmember extends ListenerAdapter {
 			return;
 		}
 
-		String playertag = playerOption.getAsString();
+		String playerOptionStr = playerOption.getAsString().toUpperCase().replace("O", "0");
 
-		Player p = new Player(playertag);
-		Clan c = p.getClanDB();
+		ArrayList<String> playerlist = new ArrayList<>();
 
-		if (c == null) {
-			event.replyEmbeds(MessageUtil.buildEmbed(title, "Dieser Spieler existiert nicht oder ist in keinem Clan.",
-					MessageUtil.EmbedType.ERROR)).queue();
-			return;
-		}
-
-		if (!c.ExistsDB()) {
-			event.getHook()
-					.editOriginalEmbeds(
-							MessageUtil.buildEmbed(title, "Dieser Clan existiert nicht.", MessageUtil.EmbedType.ERROR))
-					.queue();
-			return;
-		}
-
-		if (c.getTag().equals("warteliste")) {
-			event.getHook()
-					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-							"Diesen Befehl kannst du nicht auf die Warteliste ausführen.", MessageUtil.EmbedType.ERROR))
-					.queue();
-			return;
+		if (playerOptionStr.contains(",")) {
+			String[] tags = playerOptionStr.split(",");
+			for (String t : tags) {
+				playerlist.add(t.trim());
+			}
+		} else {
+			playerlist.add(playerOptionStr);
 		}
 
 		new Thread(() -> {
-			ArrayList<Kickpoint> activekps = p.getActiveKickpoints();
+			boolean firstTime = true;
+			for (String playertag : playerlist) {
+				Player p = new Player(playertag);
+				Clan c = p.getClanDB();
+
+				if (c == null) {
+					if (firstTime) {
+						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " existiert nicht oder ist in keinem Clan.",
+								MessageUtil.EmbedType.ERROR)).queue();
+						firstTime = false;
+					} else {
+						event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " existiert nicht oder ist in keinem Clan.",
+								MessageUtil.EmbedType.ERROR)).queue();
+					}
+					continue;
+				}
+
+				if (!c.ExistsDB()) {
+					if (firstTime) {
+						event.getHook().editOriginalEmbeds(
+								MessageUtil.buildEmbed(title, "Der Clan des Spielers " + playertag + " existiert nicht.", MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel().sendMessageEmbeds(
+								MessageUtil.buildEmbed(title, "Der Clan des Spielers " + playertag + " existiert nicht.", MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+					continue;
+				}
+
+				if (c.getTag().equals("warteliste")) {
+					if (firstTime) {
+						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
+								"Diesen Befehl kannst du nicht auf die Warteliste ausführen (Spieler: " + playertag + ").", MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title,
+								"Diesen Befehl kannst du nicht auf die Warteliste ausführen (Spieler: " + playertag + ").", MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+					continue;
+				}
+
+				ArrayList<Kickpoint> activekps = p.getActiveKickpoints();
 
 			String desc = "Aktive Kickpunkte von " + MessageUtil.unformat(p.getInfoStringDB()) + " in "
 					+ c.getInfoStringDB() + ":\n";
@@ -137,8 +168,15 @@ public class kpmember extends ListenerAdapter {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
 			String formatiert = jetzt.format(formatter);
 
-			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
-					"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
+			if (firstTime) {
+				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
+						"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
+				firstTime = false;
+			} else {
+				event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
+						"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
+			}
+			}
 		}).start();
 
 	}
