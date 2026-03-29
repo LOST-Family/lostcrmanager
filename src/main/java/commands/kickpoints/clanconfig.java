@@ -97,12 +97,12 @@ import util.MessageUtil;
 			String title = "Clanconfig";
 			String daysstr = event.getValue("days").getAsString();
 			String maxstr = event.getValue("max").getAsString();
-			int days = -1;
-			int max = -1;
+			int days;
+			int max;
 			try {
-				days = Integer.valueOf(daysstr);
-				max = Integer.valueOf(maxstr);
-			} catch (Exception ex) {
+				days = Integer.parseInt(daysstr);
+				max = Integer.parseInt(maxstr);
+			} catch (NumberFormatException ex) {
 				event.getHook()
 						.editOriginalEmbeds(
 								MessageUtil.buildEmbed(title, "Es müssen Zahlen sein.", MessageUtil.EmbedType.ERROR))

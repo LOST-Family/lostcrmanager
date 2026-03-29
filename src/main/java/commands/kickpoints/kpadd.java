@@ -128,10 +128,10 @@ import util.MessageUtil;
 			String title = "Kickpunkte";
 			String reason = event.getValue("reason").getAsString();
 			String amountstr = event.getValue("amount").getAsString();
-			int amount = -1;
+			int amount;
 			try {
-				amount = Integer.valueOf(amountstr);
-			} catch (Exception ex) {
+				amount = Integer.parseInt(amountstr);
+			} catch (NumberFormatException ex) {
 				event.getHook().editOriginalEmbeds(
 						MessageUtil.buildEmbed(title, "Die Anzahl muss eine Zahl sein.", MessageUtil.EmbedType.ERROR))
 						.queue();

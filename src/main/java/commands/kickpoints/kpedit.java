@@ -79,14 +79,14 @@ import util.MessageUtil;
 	public void onModalInteraction(@Nonnull ModalInteractionEvent event) {
 		if (event.getModalId().startsWith("kpedit")) {
 			event.deferReply().queue();
-			int id = Integer.valueOf(event.getModalId().split("_")[1]);
+			int id = Integer.parseInt(event.getModalId().split("_")[1]);
 			String title = "Kickpunkte";
 			String reason = event.getValue("reason").getAsString();
 			String amountstr = event.getValue("amount").getAsString();
-			int amount = -1;
+			int amount;
 			try {
-				amount = Integer.valueOf(amountstr);
-			} catch (Exception ex) {
+				amount = Integer.parseInt(amountstr);
+			} catch (NumberFormatException ex) {
 				event.getHook().editOriginalEmbeds(
 						MessageUtil.buildEmbed(title, "Die Anzahl muss eine Zahl sein.", MessageUtil.EmbedType.ERROR))
 						.queue();

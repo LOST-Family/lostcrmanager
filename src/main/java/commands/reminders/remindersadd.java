@@ -168,23 +168,16 @@ import util.MessageUtil;
 		if (weekday == null || weekday.isEmpty()) {
 			return weekday;
 		}
-		switch (weekday) {
-		case "monday":
-			return "Montag";
-		case "tuesday":
-			return "Dienstag";
-		case "wednesday":
-			return "Mittwoch";
-		case "thursday":
-			return "Donnerstag";
-		case "friday":
-			return "Freitag";
-		case "saturday":
-			return "Samstag";
-		case "sunday":
-			return "Sonntag";
-		}
-		return null;
+		return switch (weekday) {
+			case "monday" -> "Montag";
+			case "tuesday" -> "Dienstag";
+			case "wednesday" -> "Mittwoch";
+			case "thursday" -> "Donnerstag";
+			case "friday" -> "Freitag";
+			case "saturday" -> "Samstag";
+			case "sunday" -> "Sonntag";
+			default -> null;
+		};
 	}
 
 	private static int getAvailableReminderID() {
@@ -202,7 +195,6 @@ import util.MessageUtil;
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return available;
 	}
