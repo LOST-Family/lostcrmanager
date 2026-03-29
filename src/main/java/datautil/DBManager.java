@@ -46,7 +46,6 @@ public class DBManager {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return choices;
 	}
@@ -66,7 +65,6 @@ public class DBManager {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return available;
 	}
@@ -124,12 +122,11 @@ public class DBManager {
 						display += " (" + tag + ")";
 					}
 
-					list.add(new Tuple<String, String>(display, tag));
+					list.add(new Tuple<>(display, tag));
 
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		clans = list;
 		clanslocked = true;
@@ -176,48 +173,54 @@ public class DBManager {
 		}
 
 		List<Command.Choice> choices = new ArrayList<>();
-		for (Triplet<String, String, String> available : players) {
-			String display = available.getFirst();
-			String clanName = available.getSecond();
-			String tag = available.getThird();
-
-			if (inclantype == InClanType.NOTINCLAN) {
-				if (clanName == null || clanName.isEmpty()) {
-					if (display.toLowerCase().contains(input.toLowerCase())
-							|| tag.toLowerCase().startsWith(input.toLowerCase())) {
-						choices.add(new Command.Choice(display, tag));
-						if (choices.size() == 25) {
-							break;
-						}
-					}
-				}
-			} else if (inclantype == InClanType.INCLAN) {
-				if (clanName != null && !clanName.isEmpty()) {
-					display += " - " + clanName;
-					if (display.toLowerCase().contains(input.toLowerCase())
-							|| tag.toLowerCase().startsWith(input.toLowerCase())) {
-						choices.add(new Command.Choice(display, tag));
-						if (choices.size() == 25) {
-							break; // Max 25 Vorschläge
-						}
-					}
-				}
-			} else if (inclantype == InClanType.ALL) {
-				if (clanName != null && !clanName.isEmpty()) {
-					display += " - " + clanName;
-				}
-
-				// Filter mit Eingabe (input ist String mit aktuell eingegebenem Text)
-				if (display.toLowerCase().contains(input.toLowerCase())
-						|| tag.toLowerCase().startsWith(input.toLowerCase())) {
-					choices.add(new Command.Choice(display, tag));
-					if (choices.size() == 25) {
-						break; // Max 25 Vorschläge
-					}
-				}
-			}
-
-		}
+            OUTER:
+            for (Triplet<String, String, String> available : players) {
+                String display = available.getFirst();
+                String clanName = available.getSecond();
+                String tag = available.getThird();
+                if (null != inclantype) {
+                    switch (inclantype) {
+                        case NOTINCLAN -> {
+                            if (clanName == null || clanName.isEmpty()) {
+                                if (display.toLowerCase().contains(input.toLowerCase())
+                                        || tag.toLowerCase().startsWith(input.toLowerCase())) {
+                                    choices.add(new Command.Choice(display, tag));
+                                    if (choices.size() == 25) {
+                                        break OUTER;
+                                    }
+                                }
+                            }
+                        }
+                        case INCLAN -> {
+                            if (clanName != null && !clanName.isEmpty()) {
+                                display += " - " + clanName;
+                                if (display.toLowerCase().contains(input.toLowerCase())
+                                        || tag.toLowerCase().startsWith(input.toLowerCase())) {
+                                    choices.add(new Command.Choice(display, tag));
+                                    if (choices.size() == 25) {
+                                        break OUTER; // Max 25 Vorschläge
+                                    }
+                                }
+                            }
+                        }
+                        case ALL -> {
+                            if (clanName != null && !clanName.isEmpty()) {
+                                display += " - " + clanName;
+                            }
+                            // Filter mit Eingabe (input ist String mit aktuell eingegebenem Text)
+                            if (display.toLowerCase().contains(input.toLowerCase())
+                                    || tag.toLowerCase().startsWith(input.toLowerCase())) {
+                                choices.add(new Command.Choice(display, tag));
+                                if (choices.size() == 25) {
+                                    break OUTER; // Max 25 Vorschläge
+                                }
+                            }
+                        }
+                        default -> {
+                        }
+                    }
+                }
+            }
 		Thread thread = new Thread(() -> {
 			if (!playerslocked)
 				cachePlayers();
@@ -242,11 +245,10 @@ public class DBManager {
 
 					String display = new Player(tag).getInfoStringDB();
 
-					list.add(new Triplet<String, String, String>(display, clanName, tag));
+					list.add(new Triplet<>(display, clanName, tag));
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		players = list;
 		playerslocked = true;
@@ -264,49 +266,56 @@ public class DBManager {
 		}
 
 		List<Command.Choice> choices = new ArrayList<>();
-		for (Triplet<String, String, String> available : players) {
-			String display = available.getFirst();
-			String clanName = available.getSecond();
-			String tag = available.getThird();
-			if (!tag.equals("warteliste")) {
-				if (inclantype == InClanType.NOTINCLAN) {
-					if (clanName == null || clanName.isEmpty()) {
-						if (display.toLowerCase().contains(input.toLowerCase())
-								|| tag.toLowerCase().startsWith(input.toLowerCase())) {
-							choices.add(new Command.Choice(display, tag));
-							if (choices.size() == 25) {
-								break;
-							}
-						}
-					}
-				} else if (inclantype == InClanType.INCLAN) {
-					if (clanName != null && !clanName.isEmpty()) {
-						display += " - " + clanName;
-						if (display.toLowerCase().contains(input.toLowerCase())
-								|| tag.toLowerCase().startsWith(input.toLowerCase())) {
-							choices.add(new Command.Choice(display, tag));
-							if (choices.size() == 25) {
-								break; // Max 25 Vorschläge
-							}
-						}
-					}
-				} else if (inclantype == InClanType.ALL) {
-					if (clanName != null && !clanName.isEmpty()) {
-						display += " - " + clanName;
-					}
-
-					// Filter mit Eingabe (input ist String mit aktuell eingegebenem Text)
-					if (display.toLowerCase().contains(input.toLowerCase())
-							|| tag.toLowerCase().startsWith(input.toLowerCase())) {
-						choices.add(new Command.Choice(display, tag));
-						if (choices.size() == 25) {
-							break; // Max 25 Vorschläge
-						}
-					}
-				}
-			}
-
-		}
+            OUTER:
+            for (Triplet<String, String, String> available : players) {
+                String display = available.getFirst();
+                String clanName = available.getSecond();
+                String tag = available.getThird();
+                if (!tag.equals("warteliste")) {
+                    if (null != inclantype) {
+                        switch (inclantype) {
+                            case NOTINCLAN -> {
+                                if (clanName == null || clanName.isEmpty()) {
+                                    if (display.toLowerCase().contains(input.toLowerCase())
+                                            || tag.toLowerCase().startsWith(input.toLowerCase())) {
+                                        choices.add(new Command.Choice(display, tag));
+                                        if (choices.size() == 25) {
+                                            break OUTER;
+                                        }
+                                    }
+                                }
+                            }
+                            case INCLAN -> {
+                                if (clanName != null && !clanName.isEmpty()) {
+                                    display += " - " + clanName;
+                                    if (display.toLowerCase().contains(input.toLowerCase())
+                                            || tag.toLowerCase().startsWith(input.toLowerCase())) {
+                                        choices.add(new Command.Choice(display, tag));
+                                        if (choices.size() == 25) {
+                                            break OUTER; // Max 25 Vorschläge
+                                        }
+                                    }
+                                }
+                            }
+                            case ALL -> {
+                                if (clanName != null && !clanName.isEmpty()) {
+                                    display += " - " + clanName;
+                                }
+                                // Filter mit Eingabe (input ist String mit aktuell eingegebenem Text)
+                                if (display.toLowerCase().contains(input.toLowerCase())
+                                        || tag.toLowerCase().startsWith(input.toLowerCase())) {
+                                    choices.add(new Command.Choice(display, tag));
+                                    if (choices.size() == 25) {
+                                        break OUTER; // Max 25 Vorschläge
+                                    }
+                                }
+                            }
+                            default -> {
+                            }
+                        }
+                    }
+                }
+            }
 		Thread thread = new Thread(() -> {
 			if (!playerslocked)
 				cachePlayers();
@@ -349,7 +358,6 @@ public class DBManager {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 
 		return choices;
@@ -375,7 +383,6 @@ public class DBManager {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		return choices;
 	}
