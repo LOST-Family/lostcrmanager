@@ -21,7 +21,7 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import util.MessageUtil;
 
-public class statslist extends ListenerAdapter {
+@SuppressWarnings("null") public class statslist extends ListenerAdapter {
 
 	// Available stat fields
 	private static final String[] AVAILABLE_FIELDS = { "Wins", "Trophies", "UC-Trophies", "Ranked-Liga",
@@ -72,7 +72,7 @@ public class statslist extends ListenerAdapter {
 		}
 
 		// Parse display fields - now required
-		List<String> displayFields = new ArrayList<>();
+		List<String> displayFields;
 		if (displayFieldsOption != null) {
 			String fieldsInput = displayFieldsOption.getAsString();
 			displayFields = parseFields(fieldsInput);
@@ -125,7 +125,7 @@ public class statslist extends ListenerAdapter {
 				event.getHook().editOriginal(inputStream, "StatsList.txt")
 						.setEmbeds(MessageUtil.buildEmbed(title, description, MessageUtil.EmbedType.INFO)).queue();
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ein Fehler ist aufgetreten: " + e.getMessage(), MessageUtil.EmbedType.ERROR)).queue();
 			}
@@ -137,7 +137,7 @@ public class statslist extends ListenerAdapter {
 			boolean rolesSorting, boolean clanSorting, SlashCommandInteractionEvent event, String title) {
 
 		ArrayList<Player> allPlayers = new ArrayList<>();
-		String content = "";
+		String content;
 
 		// Load all players
 		for (int a = 0; a < clanTags.size(); a++) {
@@ -237,14 +237,11 @@ public class statslist extends ListenerAdapter {
 				if (p.isHiddenColeader()) {
 					continue;
 				}
-				if (p.getRole() == Player.RoleType.ADMIN) {
-					admins.add(p);
-				} else if (p.getRole() == Player.RoleType.LEADER) {
-					leaders.add(p);
-				} else if (p.getRole() == Player.RoleType.COLEADER) {
-					coleaders.add(p);
-				} else {
-					regular.add(p);
+				switch (p.getRole()) {
+					case ADMIN -> admins.add(p);
+					case LEADER -> leaders.add(p);
+					case COLEADER -> coleaders.add(p);
+					default -> regular.add(p);
 				}
 			}
 
@@ -304,14 +301,11 @@ public class statslist extends ListenerAdapter {
 			ArrayList<Player> regular = new ArrayList<>();
 
 			for (Player p : players) {
-				if (p.getRole() == Player.RoleType.ADMIN) {
-					admins.add(p);
-				} else if (p.getRole() == Player.RoleType.LEADER) {
-					leaders.add(p);
-				} else if (p.getRole() == Player.RoleType.COLEADER) {
-					coleaders.add(p);
-				} else {
-					regular.add(p);
+				switch (p.getRole()) {
+					case ADMIN -> admins.add(p);
+					case LEADER -> leaders.add(p);
+					case COLEADER -> coleaders.add(p);
+					default -> regular.add(p);
 				}
 			}
 
@@ -381,7 +375,7 @@ public class statslist extends ListenerAdapter {
 		return content.toString();
 	}
 
-	@SuppressWarnings("null")
+	
 	private String formatPlayerLine(Player p, List<String> displayFields) {
 		boolean isMarked = p.isMarked();
 
@@ -390,18 +384,14 @@ public class statslist extends ListenerAdapter {
 		if (p.getClanDB() == null) {
 			status = "[Warteschlange]";
 		} else {
-			String role = "";
-			if (p.getRole() == Player.RoleType.ADMIN) {
-				role = "Admin";
-			} else if (p.getRole() == Player.RoleType.LEADER) {
-				role = "Anführer";
-			} else if (p.getRole() == Player.RoleType.COLEADER) {
-				role = "Vize-Anführer";
-			} else if (p.getRole() == Player.RoleType.ELDER) {
-				role = "Ältester";
-			} else if (p.getRole() == Player.RoleType.MEMBER) {
-				role = "Mitglied";
-			}
+			String role = switch (p.getRole()) {
+				case ADMIN -> "Admin";
+				case LEADER -> "AnfÃ¼hrer";
+				case COLEADER -> "Vize-AnfÃ¼hrer";
+				case ELDER -> "Ã„ltester";
+				case MEMBER -> "Mitglied";
+				default -> "";
+			};
 			status = "[" + role + " " + p.getClanDB().getNameDB() + "]";
 		}
 		String discordInfo = "Dc:";
@@ -411,10 +401,11 @@ public class statslist extends ListenerAdapter {
 			try {
 				member = Bot.getJda().getGuildById(Bot.guild_id)
 						.retrieveMember(Bot.getJda().retrieveUserById(discordID).submit().get()).submit().get();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (Exception e) {
-				// Member not found
+			} catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+				if (e instanceof InterruptedException) {
+					Thread.currentThread().interrupt();
+				}
+				// Member not found/error
 			}
 			if (member != null) {
 				String nick = member.getEffectiveName();
@@ -445,51 +436,49 @@ public class statslist extends ListenerAdapter {
 	}
 
 	private Object getFieldValue(Player p, String field) {
-		switch (field) {
-			case "Wins":
+		return switch (field) {
+			case "Wins" -> {
 				Player.WinsData winsResult = p.getCurrentMonthWins();
 				String winsDisplay = String.valueOf(winsResult.wins);
 				if (winsResult.hasWarning) {
-					winsDisplay += " ⚠️";
+					winsDisplay += " ��";
 				}
-				return winsDisplay;
-			case "Trophies":
+				yield winsDisplay;
+			}
+			case "Trophies" -> {
 				Integer trophies = p.getTrophies();
-				return trophies != null ? trophies : 0;
-			case "UC-Trophies":
+				yield trophies != null ? trophies : 0;
+			}
+			case "UC-Trophies" -> {
 				Integer polTrophies = p.getPoLTrophies();
-				return polTrophies != null ? polTrophies : 0;
-			case "Ranked-Liga":
+				yield polTrophies != null ? polTrophies : 0;
+			}
+			case "Ranked-Liga" -> {
 				Integer leagueNumber = p.getPoLLeagueNumber();
-				return leagueNumber != null ? leagueNumber : 0;
-			case "Letzte Ranked-Liga":
+				yield leagueNumber != null ? leagueNumber : 0;
+			}
+			case "Letzte Ranked-Liga" -> {
 				Integer lastLeagueNumber = p.getLastPathOfLegendLeagueNumber();
-				return lastLeagueNumber != null ? lastLeagueNumber : 0;
-			case "Letzte UC-Trophies":
+				yield lastLeagueNumber != null ? lastLeagueNumber : 0;
+			}
+			case "Letzte UC-Trophies" -> {
 				Integer lastLeagueTrophies = p.getLastPathOfLegendTrophies();
-				return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
-			default:
-				return "N/A";
-		}
+				yield lastLeagueTrophies != null ? lastLeagueTrophies : 0;
+			}
+			default -> "N/A";
+		};
 	}
 
 	private String getFieldDisplayName(String field) {
-		switch (field) {
-			case "Wins":
-				return "Wins (Monat)";
-			case "Trophies":
-				return "Trophäen";
-			case "UC-Trophies":
-				return "UC-Trophäen";
-			case "Ranked-Liga":
-				return "Ranked-Liga";
-			case "Letzte Ranked-Liga":
-				return "Letzte Ranked-Liga";
-			case "Letzte UC-Trophies":
-				return "Letzte UC-Trophies";
-			default:
-				return field;
-		}
+		return switch (field) {
+			case "Wins" -> "Wins (Monat)";
+			case "Trophies" -> "TrophÃ¤en";
+			case "UC-Trophies" -> "UC-TrophÃ¤en";
+			case "Ranked-Liga" -> "Ranked-Liga";
+			case "Letzte Ranked-Liga" -> "Letzte Ranked-Liga";
+			case "Letzte UC-Trophies" -> "Letzte UC-Trophies";
+			default -> field;
+		};
 	}
 
 	private ArrayList<Player> sortPlayersByRolesAndFields(ArrayList<Player> players, List<String> sortFields) {
@@ -518,7 +507,7 @@ public class statslist extends ListenerAdapter {
 		return players.stream().sorted(comparator).collect(Collectors.toCollection(ArrayList::new));
 	}
 
-	@SuppressWarnings("null")
+	
 	private ArrayList<Player> sortPlayersByFields(ArrayList<Player> players, List<String> sortFields) {
 		Comparator<Player> comparator = null;
 
@@ -541,37 +530,30 @@ public class statslist extends ListenerAdapter {
 	}
 
 	private Comparator<Player> getFieldComparator(String field) {
-		switch (field) {
-			case "Wins":
-				return Comparator.comparingInt((Player p) -> p.getCurrentMonthWins().wins);
-			case "Trophies":
-				return Comparator.comparingInt((Player p) -> {
+		return switch (field) {
+			case "Wins" -> Comparator.comparingInt((Player p) -> p.getCurrentMonthWins().wins);
+			case "Trophies" -> Comparator.comparingInt((Player p) -> {
 					Integer trophies = p.getTrophies();
 					return trophies != null ? trophies : 0;
 				});
-			case "UC-Trophies":
-				return Comparator.comparingInt((Player p) -> {
+			case "UC-Trophies" -> Comparator.comparingInt((Player p) -> {
 					Integer polTrophies = p.getPoLTrophies();
 					return polTrophies != null ? polTrophies : 0;
 				});
-			case "Ranked-Liga":
-				return Comparator.comparingInt((Player p) -> {
+			case "Ranked-Liga" -> Comparator.comparingInt((Player p) -> {
 					Integer leagueNumber = p.getPoLLeagueNumber();
 					return leagueNumber != null ? leagueNumber : 0;
 				});
-			case "Letzte Ranked-Liga":
-				return Comparator.comparingInt((Player p) -> {
+			case "Letzte Ranked-Liga" -> Comparator.comparingInt((Player p) -> {
 					Integer lastLeagueNumber = p.getLastPathOfLegendLeagueNumber();
 					return lastLeagueNumber != null ? lastLeagueNumber : 0;
 				});
-			case "Letzte UC-Trophies":
-				return Comparator.comparingInt((Player p) -> {
+			case "Letzte UC-Trophies" -> Comparator.comparingInt((Player p) -> {
 					Integer lastLeagueTrophies = p.getLastPathOfLegendTrophies();
 					return lastLeagueTrophies != null ? lastLeagueTrophies : 0;
 				});
-			default:
-				return Comparator.comparingInt((_) -> 0);
-		}
+			default -> Comparator.comparingInt((Player p) -> 0);
+		};
 	}
 
 	private List<String> parseFields(String input) {
@@ -612,7 +594,7 @@ public class statslist extends ListenerAdapter {
 		return clanTags;
 	}
 
-	@SuppressWarnings("null")
+	
 	@Override
 	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("statslist"))
@@ -621,23 +603,27 @@ public class statslist extends ListenerAdapter {
 		String focused = event.getFocusedOption().getName();
 		String input = event.getFocusedOption().getValue();
 
-		if (focused.equals("clan")) {
-			// Handle comma-separated autocomplete similar to fields
-			List<Command.Choice> choices = getClanAutocomplete(input, event.getUser().getId());
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("display_fields") || focused.equals("sort_fields")) {
-			// Handle comma-separated autocomplete
-			List<Command.Choice> choices = getFieldAutocomplete(input);
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("roles_sorting")) {
-			List<Command.Choice> choices = new ArrayList<>();
-			if ("true".toLowerCase().contains(input.toLowerCase())) {
-				choices.add(new Command.Choice("true", "true"));
+		switch (focused) {
+			case "clan" -> {
+				// Handle comma-separated autocomplete similar to fields
+				List<Command.Choice> choices = getClanAutocomplete(input);
+				event.replyChoices(choices).queue();
 			}
-			if ("clans".toLowerCase().contains(input.toLowerCase())) {
-				choices.add(new Command.Choice("clans", "clans"));
+			case "display_fields", "sort_fields" -> {
+				// Handle comma-separated autocomplete
+				List<Command.Choice> choices = getFieldAutocomplete(input);
+				event.replyChoices(choices).queue();
 			}
-			event.replyChoices(choices).queue();
+			case "roles_sorting" -> {
+				List<Command.Choice> choices = new ArrayList<>();
+				if ("true".toLowerCase().contains(input.toLowerCase())) {
+					choices.add(new Command.Choice("true", "true"));
+				}
+				if ("clans".toLowerCase().contains(input.toLowerCase())) {
+					choices.add(new Command.Choice("clans", "clans"));
+				}
+				event.replyChoices(choices).queue();
+			}
 		}
 	}
 
@@ -702,7 +688,7 @@ public class statslist extends ListenerAdapter {
 		return choices;
 	}
 
-	private List<Command.Choice> getClanAutocomplete(String input, String userId) {
+	private List<Command.Choice> getClanAutocomplete(String input) {
 		List<Command.Choice> choices = new ArrayList<>();
 
 		// Split by comma and get the last part
@@ -810,3 +796,10 @@ public class statslist extends ListenerAdapter {
 		}
 	}
 }
+
+
+
+
+
+
+

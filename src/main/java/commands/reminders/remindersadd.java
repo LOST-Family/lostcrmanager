@@ -26,9 +26,9 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import util.MessageUtil;
 
-public class remindersadd extends ListenerAdapter {
+@SuppressWarnings("null") public class remindersadd extends ListenerAdapter {
 
-	@SuppressWarnings("null")
+	
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("remindersadd"))
@@ -130,7 +130,7 @@ public class remindersadd extends ListenerAdapter {
 		event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
 	}
 
-	@SuppressWarnings("null")
+	
 	@Override
 	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("remindersadd"))

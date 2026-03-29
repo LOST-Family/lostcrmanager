@@ -28,7 +28,6 @@ import util.MessageUtil;
 
 public class wins extends ListenerAdapter {
 
-	@SuppressWarnings("null")
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("wins"))
@@ -75,7 +74,7 @@ public class wins extends ListenerAdapter {
 				String[] parts = monthValue.split("-");
 				year = Integer.parseInt(parts[0]);
 				month = Integer.parseInt(parts[1]);
-			} catch (Exception e) {
+			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ungültiges Monat-Format. Bitte wähle einen Monat aus der Liste.", MessageUtil.EmbedType.ERROR))
 						.queue();
@@ -138,7 +137,7 @@ public class wins extends ListenerAdapter {
 
 					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, result, MessageUtil.EmbedType.INFO,
 							"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
-				} else {
+				} else if (clanOption != null) {
 					// Clan mode
 					String clanInput = clanOption.getAsString();
 
@@ -214,7 +213,7 @@ public class wins extends ListenerAdapter {
 								+ ")";
 					}
 
-					sb.append("**Wins für " + clanDisplay + " im " + monthName + " " + yearFinal + ":**\n\n");
+					sb.append("**Wins für ").append(clanDisplay).append(" im ").append(monthName).append(" ").append(yearFinal).append(":**\n\n");
 
 					for (PlayerWinsResult result : results) {
 						sb.append(MessageUtil.unformat(result.playerInfo));
@@ -222,10 +221,10 @@ public class wins extends ListenerAdapter {
 						if (clansList.size() > 1) {
 							Player p = new Player(result.playerTag);
 							if (p.getClanDB() != null) {
-								sb.append(" [" + p.getClanDB().getNameDB() + "]");
+								sb.append(" [").append(p.getClanDB().getNameDB()).append("]");
 							}
 						}
-						sb.append(": **" + result.wins + "**");
+						sb.append(": **").append(result.wins).append("**");
 						if (result.hasWarning) {
 							sb.append(" ⚠️");
 						}
@@ -255,7 +254,6 @@ public class wins extends ListenerAdapter {
 				}
 			} catch (Exception e) {
 				System.err.println("Fehler beim Verarbeiten des Wins-Befehls: " + e.getMessage());
-				e.printStackTrace();
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ein Fehler ist aufgetreten: " + e.getMessage(), MessageUtil.EmbedType.ERROR)).queue();
 			}
@@ -319,15 +317,17 @@ public class wins extends ListenerAdapter {
 			boolean endIsMonthStart = player.isStartOfMonth(endRecord.recordedAt, startOfNextMonth);
 
 			StringBuilder result = new StringBuilder();
-			result.append("### " + player.getInfoStringDB() + "\n");
-			result.append("Wins im " + monthName + " " + year + ": **" + winsData.wins + "**\n");
-			result.append("(Von " + startRecord.wins + " auf " + endRecord.wins + ")\n");
+			result.append("### ").append(player.getInfoStringDB()).append("\n");
+			result.append("Wins im ").append(monthName).append(" ").append(year).append(": **").append(winsData.wins)
+					.append("**\n");
+			result.append("(Von ").append(startRecord.wins).append(" auf ").append(endRecord.wins).append(")\n");
 
 			if (!startIsMonthStart) {
-				result.append("⚠️ Startdaten vom " + startTimeFormatted + " (nicht Monatsanfang)\n");
+				result.append("⚠️Startdaten vom ").append(startTimeFormatted)
+						.append(" (nicht Monatsanfang)\n");
 			}
 			if (!endIsMonthStart) {
-				result.append("⚠️ Enddaten vom " + endTimeFormatted + " (nicht Monatsanfang)\n");
+				result.append("⚠️Enddaten vom ").append(endTimeFormatted).append(" (nicht Monatsanfang)\n");
 			}
 
 			return result.toString();
@@ -343,22 +343,27 @@ public class wins extends ListenerAdapter {
 		String focused = event.getFocusedOption().getName();
 		String input = event.getFocusedOption().getValue();
 
-		if (focused.equals("player")) {
-			List<Command.Choice> choices = DBManager.getPlayerlistAutocomplete(input, DBManager.InClanType.ALL);
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("clan")) {
-			// Handle comma-separated autocomplete similar to statslist (no "Alle Clans")
-			List<Command.Choice> choices = getClanAutocomplete(input, event.getUser().getId());
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("month")) {
-			List<Command.Choice> choices = getMonthAutocomplete(input);
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("exclude_leaders")) {
-			List<Command.Choice> choices = new ArrayList<>();
-			if ("true".startsWith(input.toLowerCase())) {
-				choices.add(new Command.Choice("true", "true"));
-			}
-			event.replyChoices(choices).queue();
+		switch (focused) {
+			case "player" -> {
+                            List<Command.Choice> playerChoices = DBManager.getPlayerlistAutocomplete(input, DBManager.InClanType.ALL);
+                            event.replyChoices(playerChoices).queue();
+                }
+			case "clan" -> {
+                            // Handle comma-separated autocomplete similar to statslist (no "Alle Clans")
+                            List<Command.Choice> clanChoices = getClanAutocomplete(input);
+                            event.replyChoices(clanChoices).queue();
+                }
+			case "month" -> {
+                            List<Command.Choice> monthChoices = getMonthAutocomplete(input);
+                            event.replyChoices(monthChoices).queue();
+                }
+			case "exclude_leaders" -> {
+                            List<Command.Choice> excludeChoices = new ArrayList<>();
+                            if ("true".startsWith(input.toLowerCase())) {
+                                excludeChoices.add(new Command.Choice("true", "true"));
+                            }
+                            event.replyChoices(excludeChoices).queue();
+                }
 		}
 	}
 
@@ -439,7 +444,7 @@ public class wins extends ListenerAdapter {
 				String[] monthParts = monthValue.split("-");
 				year = Integer.parseInt(monthParts[0]);
 				month = Integer.parseInt(monthParts[1]);
-			} catch (Exception e) {
+			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 				event.getHook()
 						.editOriginalEmbeds(
 								MessageUtil.buildEmbed(title, "Ungültiges Monat-Format.", MessageUtil.EmbedType.ERROR))
@@ -560,7 +565,7 @@ public class wins extends ListenerAdapter {
 								+ ")";
 					}
 
-					sb.append("**Wins für " + clanDisplay + " im " + monthName + " " + yearFinal + ":**\n\n");
+					sb.append("**Wins für ").append(clanDisplay).append(" im ").append(monthName).append(" ").append(yearFinal).append(":**\n\n");
 
 					for (PlayerWinsResult result : results) {
 						sb.append(MessageUtil.unformat(result.playerInfo));
@@ -568,10 +573,10 @@ public class wins extends ListenerAdapter {
 						if (clansList.size() > 1) {
 							Player p = new Player(result.playerTag);
 							if (p.getClanDB() != null) {
-								sb.append(" [" + p.getClanDB().getNameDB() + "]");
+								sb.append(" [").append(p.getClanDB().getNameDB()).append("]");
 							}
 						}
-						sb.append(": **" + result.wins + "**");
+						sb.append(": **").append(result.wins).append("**");
 						if (result.hasWarning) {
 							sb.append(" ⚠️");
 						}
@@ -601,7 +606,6 @@ public class wins extends ListenerAdapter {
 				}
 			} catch (Exception e) {
 				System.err.println("Fehler beim Verarbeiten des Wins-Refresh-Befehls: " + e.getMessage());
-				e.printStackTrace();
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ein Fehler ist aufgetreten: " + e.getMessage(), MessageUtil.EmbedType.ERROR)).queue();
 			}
@@ -676,7 +680,10 @@ public class wins extends ListenerAdapter {
 			try {
 				savePlayerWins(tag);
 				// Delay to avoid API rate limiting (500ms between requests)
-				Thread.sleep(500);
+				java.util.concurrent.TimeUnit.MILLISECONDS.sleep(500);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				System.err.println("Unterbrochen beim Speichern der Wins für " + tag + ": " + e.getMessage());
 			} catch (Exception e) {
 				System.err.println("Fehler beim Speichern der Wins für " + tag + ": " + e.getMessage());
 			}
@@ -700,7 +707,7 @@ public class wins extends ListenerAdapter {
 		return clanTags;
 	}
 
-	private List<Command.Choice> getClanAutocomplete(String input, String userId) {
+	private List<Command.Choice> getClanAutocomplete(String input) {
 		List<Command.Choice> choices = new ArrayList<>();
 
 		// Split by comma and get the last part

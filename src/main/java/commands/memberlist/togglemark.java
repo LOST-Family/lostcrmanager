@@ -120,14 +120,14 @@ public class togglemark extends ListenerAdapter {
 
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	public void onModalInteraction(@Nonnull ModalInteractionEvent event) {
 		if (event.getModalId().startsWith("togglemark_")) {
 			event.deferReply().queue();
 			String title = "Memberverwaltung";
 			String playertag = event.getModalId().substring("togglemark_".length());
-			String note = event.getValue("note").getAsString();
+			var noteOpt = event.getValue("note");
+			String note = noteOpt != null ? noteOpt.getAsString() : null;
 
 			new Thread(() -> {
 				Player player = new Player(playertag);

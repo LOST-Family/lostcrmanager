@@ -18,7 +18,6 @@ import util.MessageUtil;
 
 public class relink extends ListenerAdapter {
 
-    @SuppressWarnings("null")
     @Override
     public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("relink"))
@@ -58,8 +57,10 @@ public class relink extends ListenerAdapter {
             String userid;
             if (useroption != null) {
                 userid = useroption.getAsMentionable().getId();
-            } else {
+            } else if (useridoption != null) {
                 userid = useridoption.getAsString();
+            } else {
+                userid = "";
             }
 
             Player p = new Player(tag);

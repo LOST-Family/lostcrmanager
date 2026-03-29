@@ -22,7 +22,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import util.MessageUtil;
 
-public class playerinfo extends ListenerAdapter {
+@SuppressWarnings("null") public class playerinfo extends ListenerAdapter {
 
 	enum ConvertionType {
 		USERTOACCS, ACCTOUSER
@@ -77,45 +77,38 @@ public class playerinfo extends ListenerAdapter {
 				
 				// Format structural characters
 				switch (c) {
-					case '{':
-					case '[':
+					case '{', '[' -> {
 						formatted.append(c);
 						indentLevel++;
 						formatted.append('\n');
 						appendIndent(formatted, indentLevel);
-						break;
-					case '}':
-					case ']':
+					}
+					case '}', ']' -> {
 						indentLevel = Math.max(0, indentLevel - 1); // Guard against negative indent
 						formatted.append('\n');
 						appendIndent(formatted, indentLevel);
 						formatted.append(c);
-						break;
-					case ',':
+					}
+					case ',' -> {
 						formatted.append(c);
 						formatted.append('\n');
 						appendIndent(formatted, indentLevel);
-						break;
-					case ':':
+					}
+					case ':' -> {
 						formatted.append(c);
 						formatted.append(' ');
-						break;
-					case ' ':
-					case '\t':
-					case '\n':
-					case '\r':
+					}
+					case ' ', '\t', '\n', '\r' -> {
 						// Skip existing whitespace
-						break;
-					default:
-						formatted.append(c);
-						break;
+					}
+					default -> formatted.append(c);
 				}
 			}
-			
+
 			return formatted.toString();
-			
+
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 			return "Error formatting JSON from API: " + e.getMessage();
 		}
 	}
@@ -133,7 +126,7 @@ public class playerinfo extends ListenerAdapter {
 		}
 	}
 
-	@SuppressWarnings("null")
+	
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("playerinfo"))
@@ -206,7 +199,7 @@ public class playerinfo extends ListenerAdapter {
 				try {
 					desc += "## " + MessageUtil.unformat(player.getInfoStringDB()) + "\n";
 				} catch (Exception e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 				desc += "Verlinkter Discord Account: <@" + userid + ">\n";
 				if (player.getClanDB() != null) {
@@ -238,7 +231,7 @@ public class playerinfo extends ListenerAdapter {
 				try {
 					desc += "## <@" + userid + "> \n";
 				} catch (Exception e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 				if (linkedaccs.isEmpty()) {
 					desc += "	Keine verlinkten Accounts.\n";
@@ -285,7 +278,7 @@ public class playerinfo extends ListenerAdapter {
 
 	}
 
-	@SuppressWarnings("null")
+	
 	@Override
 	public void onCommandAutoCompleteInteraction(@Nonnull CommandAutoCompleteInteractionEvent event) {
 		if (!event.getName().equals("playerinfo"))
@@ -307,7 +300,7 @@ public class playerinfo extends ListenerAdapter {
 		}
 	}
 
-	@SuppressWarnings("null")
+	
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent event) {
 		String id = event.getComponentId();
@@ -326,7 +319,6 @@ public class playerinfo extends ListenerAdapter {
 			event.deferEdit().queue();
 			event.getMessage().delete().queue(null, _ -> {
 			});
-			return;
 		}
 	}
 

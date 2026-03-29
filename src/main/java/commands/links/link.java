@@ -13,7 +13,6 @@ import util.MessageUtil;
 
 public class link extends ListenerAdapter {
 
-	@SuppressWarnings("null")
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("link"))
@@ -50,9 +49,11 @@ public class link extends ListenerAdapter {
 		String userid;
 		if (useroption != null) {
 			userid = useroption.getAsMentionable().getId();
-		} else {
+		} else if (useridoption != null) {
 			userid = useridoption.getAsString();
-		}
+		} else {
+            userid = "";
+        }
 
 		final String finalTag = tag;
 		final String finalUserid = userid;
@@ -64,7 +65,7 @@ public class link extends ListenerAdapter {
 				try {
 					playername = p.getNameAPI();
 				} catch (Exception e) {
-					e.printStackTrace();
+					System.err.println("API Error: " + e.getMessage());
 				}
 				if (!p.IsLinked()) {
 					DBUtil.executeUpdate("INSERT INTO players (cr_tag, discord_id, name) VALUES (?, ?, ?)", finalTag, finalUserid,

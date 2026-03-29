@@ -12,7 +12,6 @@ import util.MessageUtil;
 
 public class kpremove extends ListenerAdapter {
 
-	@SuppressWarnings("null")
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("kpremove"))
@@ -29,7 +28,7 @@ public class kpremove extends ListenerAdapter {
 			return;
 		}
 
-		int id = event.getOption("id").getAsInt();
+		int id = idOption.getAsInt();
 
 		Kickpoint kp = new Kickpoint(id);
 
