@@ -48,23 +48,15 @@ public class addmember extends ListenerAdapter {
 		String role = roleoption.getAsString();
 
 		User userexecuted = new User(event.getUser().getId());
-		if (!clantag.equals("warteliste")) {
-			if (!userexecuted.isColeaderOrHigherInClan(clantag)) {
-				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-						"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können.",
-						MessageUtil.EmbedType.ERROR)).queue();
-				return;
-			}
-		} else {
-			if (!userexecuted.isColeaderOrHigher()) {
-				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-						"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
-						MessageUtil.EmbedType.ERROR)).queue();
-				return;
-			}
+		if (!userexecuted.isColeaderOrHigher()) {
+			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
+					"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können.",
+					MessageUtil.EmbedType.ERROR)).queue();
+			return;
 		}
 
-		if (!(role.equals("leader") || role.equals("coleader") || role.equals("hiddencoleader") || role.equals("elder") || role.equals("member"))) {
+		if (!(role.equals("leader") || role.equals("coleader") || role.equals("hiddencoleader") || role.equals("elder")
+				|| role.equals("member"))) {
 			event.getHook()
 					.editOriginalEmbeds(
 							MessageUtil.buildEmbed(title, "Gib eine gültige Rolle an.", MessageUtil.EmbedType.ERROR))
@@ -103,7 +95,8 @@ public class addmember extends ListenerAdapter {
 
 			if (!p.IsLinked()) {
 				event.getHook().editOriginalEmbeds(
-						MessageUtil.buildEmbed(title, "Dieser Spieler ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
+						MessageUtil.buildEmbed(title, "Dieser Spieler ist nicht verlinkt.",
+								MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -111,7 +104,8 @@ public class addmember extends ListenerAdapter {
 			if (!c.ExistsDB()) {
 				event.getHook()
 						.editOriginalEmbeds(
-								MessageUtil.buildEmbed(title, "Dieser Clan existiert nicht.", MessageUtil.EmbedType.ERROR))
+								MessageUtil.buildEmbed(title, "Dieser Clan existiert nicht.",
+										MessageUtil.EmbedType.ERROR))
 						.queue();
 				return;
 			}
@@ -121,12 +115,13 @@ public class addmember extends ListenerAdapter {
 						"Dieser Spieler ist bereits in einem Clan.", MessageUtil.EmbedType.ERROR)).queue();
 				return;
 			}
-			DBUtil.executeUpdate("INSERT INTO clan_members (player_tag, clan_tag, clan_role) VALUES (?, ?, ?)", playertag,
+			DBUtil.executeUpdate("INSERT INTO clan_members (player_tag, clan_tag, clan_role) VALUES (?, ?, ?)",
+					playertag,
 					clantag, role);
 			String rolestring = role.equals("leader") ? "Anführer"
 					: role.equals("coleader") ? "Vize-Anführer"
 							: role.equals("hiddencoleader") ? "Vize-Anführer (versteckt)"
-								: role.equals("elder") ? "Ältester" : role.equals("member") ? "Mitglied" : null;
+									: role.equals("elder") ? "Ältester" : role.equals("member") ? "Mitglied" : null;
 
 			String desc = "";
 			if (!clantag.equals("warteliste")) {
@@ -156,7 +151,8 @@ public class addmember extends ListenerAdapter {
 						desc += "\n\n**Der User <@" + userid + "> hat bereits die Rolle <@&" + memberroleid + ">.**";
 					} else {
 						guild.addRoleToMember(member, memberrole).queue();
-						desc += "\n\n**Dem User <@" + userid + "> wurde die Rolle <@&" + memberroleid + "> hinzugefügt.**";
+						desc += "\n\n**Dem User <@" + userid + "> wurde die Rolle <@&" + memberroleid
+								+ "> hinzugefügt.**";
 					}
 				} else {
 					desc += "\n\n**Der User <@" + userid
@@ -167,7 +163,8 @@ public class addmember extends ListenerAdapter {
 				MessageUtil.sendUserPingHidden(channel, userid);
 			}
 
-			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
+			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
+					.queue();
 		}).start();
 
 	}

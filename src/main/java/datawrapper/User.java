@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
-import lostcrmanager.Bot;
 import datautil.DBManager;
 import datautil.DBUtil;
+import lostcrmanager.Bot;
 
 public class User {
 
@@ -93,7 +93,13 @@ public class User {
 			} else {
 				for (Player p : linkedaccs) {
 					if (p.getClanDB() != null) {
-						clanroles.put(p.getClanDB().getTag(), p.getRole());
+						String tag = p.getClanDB().getTag();
+						Player.RoleType role = p.getRole();
+						if (role != null) {
+							if (!clanroles.containsKey(tag) || role.ordinal() < clanroles.get(tag).ordinal()) {
+								clanroles.put(tag, role);
+							}
+						}
 					}
 				}
 			}

@@ -56,156 +56,162 @@ public class removemember extends ListenerAdapter {
 		new Thread(() -> {
 			boolean firstTime = true;
 			for (String playertag : playerlist) {
-			Player player = new Player(playertag);
+				Player player = new Player(playertag);
 
-			if (!player.IsLinked()) {
-				if (firstTime) {
-					event.getHook().editOriginalEmbeds(
-							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
-							.queue();
-					firstTime = false;
-				} else {
-					event.getChannel().sendMessageEmbeds(
-							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist nicht verlinkt.", MessageUtil.EmbedType.ERROR))
-							.queue();
-				}
-				continue;
-			}
-
-			Player.RoleType role = player.getRole();
-
-			Clan playerclan = player.getClanDB();
-
-			if (playerclan == null) {
-				if (firstTime) {
-					event.getHook().editOriginalEmbeds(
-							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
-							.queue();
-					firstTime = false;
-				} else {
-					event.getChannel().sendMessageEmbeds(
-							MessageUtil.buildEmbed(title, "Der Spieler mit dem Tag " + playertag + " ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
-							.queue();
-				}
-				continue;
-			}
-
-			String clantag = playerclan.getTag();
-
-			User userexecuted = new User(event.getUser().getId());
-			if (!clantag.equals("warteliste")) {
-				if (!userexecuted.isColeaderOrHigherInClan(clantag)) {
+				if (!player.IsLinked()) {
 					if (firstTime) {
-						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
-								MessageUtil.EmbedType.ERROR)).queue();
+						event.getHook().editOriginalEmbeds(
+								MessageUtil.buildEmbed(title,
+										"Der Spieler mit dem Tag " + playertag + " ist nicht verlinkt.",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
 						firstTime = false;
 					} else {
-						event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title,
-								"Du musst mindestens Vize-Anführer des Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
-								MessageUtil.EmbedType.ERROR)).queue();
+						event.getChannel().sendMessageEmbeds(
+								MessageUtil.buildEmbed(title,
+										"Der Spieler mit dem Tag " + playertag + " ist nicht verlinkt.",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
 					}
 					continue;
 				}
-			} else {
+
+				Player.RoleType role = player.getRole();
+
+				Clan playerclan = player.getClanDB();
+
+				if (playerclan == null) {
+					if (firstTime) {
+						event.getHook().editOriginalEmbeds(
+								MessageUtil.buildEmbed(title,
+										"Der Spieler mit dem Tag " + playertag + " ist in keinem Clan.",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel().sendMessageEmbeds(
+								MessageUtil.buildEmbed(title,
+										"Der Spieler mit dem Tag " + playertag + " ist in keinem Clan.",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+					continue;
+				}
+
+				String clantag = playerclan.getTag();
+
+				User userexecuted = new User(event.getUser().getId());
 				if (!userexecuted.isColeaderOrHigher()) {
 					if (firstTime) {
 						event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-								"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
+								"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können (Spieler: "
+										+ playertag + ").",
 								MessageUtil.EmbedType.ERROR)).queue();
 						firstTime = false;
 					} else {
 						event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title,
-								"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können (Spieler: " + playertag + ").",
+								"Du musst mindestens Vize-Anführer eines Clans sein, um diesen Befehl ausführen zu können (Spieler: "
+										+ playertag + ").",
 								MessageUtil.EmbedType.ERROR)).queue();
 					}
 					continue;
 				}
-			}
 
-			if (role == Player.RoleType.LEADER && userexecuted.getClanRoles().get(clantag) != Player.RoleType.ADMIN) {
-				if (firstTime) {
-					event.getHook()
-							.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-									"Um jemanden als Leader zu entfernen, musst du Admin sein (Spieler: " + playertag + ").", MessageUtil.EmbedType.ERROR))
-							.queue();
-					firstTime = false;
-				} else {
-					event.getChannel()
-							.sendMessageEmbeds(MessageUtil.buildEmbed(title,
-									"Um jemanden als Leader zu entfernen, musst du Admin sein (Spieler: " + playertag + ").", MessageUtil.EmbedType.ERROR))
-							.queue();
-				}
-				continue;
-			}
-			if (role == Player.RoleType.COLEADER && !(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
-					|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER)) {
-				if (firstTime) {
-					event.getHook()
-							.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-									"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein (Spieler: " + playertag + ").",
-									MessageUtil.EmbedType.ERROR))
-							.queue();
-					firstTime = false;
-				} else {
-					event.getChannel()
-							.sendMessageEmbeds(MessageUtil.buildEmbed(title,
-									"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein (Spieler: " + playertag + ").",
-									MessageUtil.EmbedType.ERROR))
-							.queue();
-				}
-				continue;
-			}
-
-			String clanname = playerclan.getNameDB();
-
-			DBUtil.executeUpdate("DELETE FROM clan_members WHERE player_tag = ?", playertag);
-			String desc = "";
-			if (!playerclan.getTag().equals("warteliste")) {
-				try {
-					desc += "Der Spieler " + MessageUtil.unformat(player.getInfoStringDB()) + " wurde aus dem Clan "
-							+ clanname + " entfernt.";
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} else {
-				try {
-					desc += "Der Spieler " + MessageUtil.unformat(player.getInfoStringDB())
-							+ " wurde aus der Warteliste entfernt.";
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-			if (!playerclan.getTag().equals("warteliste")) {
-				String userid = player.getUser().getUserID();
-				Guild guild = Bot.getJda().getGuildById(Bot.guild_id);
-				Member member = guild.getMemberById(userid);
-				String memberroleid = playerclan.getRoleID(Clan.Role.MEMBER);
-				Role memberrole = guild.getRoleById(memberroleid);
-				if (member != null) {
-					if (member.getRoles().contains(memberrole)) {
-						desc += "\n\n";
-						desc += "**Der User <@" + userid + "> hat die Rolle <@&" + memberroleid
-								+ "> noch. Nehme sie ihm manuell, falls erwünscht.**\n";
+				if (role == Player.RoleType.LEADER
+						&& userexecuted.getClanRoles().get(clantag) != Player.RoleType.ADMIN) {
+					if (firstTime) {
+						event.getHook()
+								.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+										"Um jemanden als Leader zu entfernen, musst du Admin sein (Spieler: "
+												+ playertag + ").",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
 					} else {
-						desc += "\n\n";
-						desc += "**Der User <@" + userid + "> hat die Rolle <@&" + memberroleid
-								+ "> bereits nicht mehr.**\n";
+						event.getChannel()
+								.sendMessageEmbeds(MessageUtil.buildEmbed(title,
+										"Um jemanden als Leader zu entfernen, musst du Admin sein (Spieler: "
+												+ playertag + ").",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+					continue;
+				}
+				if (role == Player.RoleType.COLEADER
+						&& !(userexecuted.getClanRoles().get(clantag) == Player.RoleType.ADMIN
+								|| userexecuted.getClanRoles().get(clantag) == Player.RoleType.LEADER)) {
+					if (firstTime) {
+						event.getHook()
+								.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+										"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein (Spieler: "
+												+ playertag + ").",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel()
+								.sendMessageEmbeds(MessageUtil.buildEmbed(title,
+										"Um jemanden als Vize-Anführer zu entfernen, musst du Admin oder Anführer sein (Spieler: "
+												+ playertag + ").",
+										MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+					continue;
+				}
+
+				String clanname = playerclan.getNameDB();
+
+				DBUtil.executeUpdate("DELETE FROM clan_members WHERE player_tag = ?", playertag);
+				String desc = "";
+				if (!playerclan.getTag().equals("warteliste")) {
+					try {
+						desc += "Der Spieler " + MessageUtil.unformat(player.getInfoStringDB()) + " wurde aus dem Clan "
+								+ clanname + " entfernt.";
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				} else {
-					desc += "\n\n**Der User <@" + userid + "> ist nicht auf dem Server.**\n";
+					try {
+						desc += "Der Spieler " + MessageUtil.unformat(player.getInfoStringDB())
+								+ " wurde aus der Warteliste entfernt.";
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
-				MessageChannelUnion channel = event.getChannel();
-				MessageUtil.sendUserPingHidden(channel, userid);
-			}
 
-			if (firstTime) {
-				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
-				firstTime = false;
-			} else {
-				event.getChannel().sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS)).queue();
-			}
+				if (!playerclan.getTag().equals("warteliste")) {
+					String userid = player.getUser().getUserID();
+					Guild guild = Bot.getJda().getGuildById(Bot.guild_id);
+					Member member = guild.getMemberById(userid);
+					String memberroleid = playerclan.getRoleID(Clan.Role.MEMBER);
+					Role memberrole = guild.getRoleById(memberroleid);
+					if (member != null) {
+						if (member.getRoles().contains(memberrole)) {
+							desc += "\n\n";
+							desc += "**Der User <@" + userid + "> hat die Rolle <@&" + memberroleid
+									+ "> noch. Nehme sie ihm manuell, falls erwünscht.**\n";
+						} else {
+							desc += "\n\n";
+							desc += "**Der User <@" + userid + "> hat die Rolle <@&" + memberroleid
+									+ "> bereits nicht mehr.**\n";
+						}
+					} else {
+						desc += "\n\n**Der User <@" + userid + "> ist nicht auf dem Server.**\n";
+					}
+					MessageChannelUnion channel = event.getChannel();
+					MessageUtil.sendUserPingHidden(channel, userid);
+				}
+
+				if (firstTime) {
+					event.getHook()
+							.editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
+							.queue();
+					firstTime = false;
+				} else {
+					event.getChannel()
+							.sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
+							.queue();
+				}
 			} // close for loop
 		}).start();
 
