@@ -56,6 +56,7 @@ import commands.reminders.remindersremove;
 import commands.util.checkroles;
 import commands.util.cwfails;
 import commands.util.leaguetrophylist;
+import commands.util.noranklistCommand;
 import commands.util.statslist;
 import commands.util.trackchannels;
 import commands.wins.wins;
@@ -152,7 +153,7 @@ public class Bot extends ListenerAdapter {
 						new kpaddreason(), new kpremovereason(), new kpeditreason(), new kpadd(), new kpmember(),
 						new kpremove(), new kpedit(), new kpinfo(), new kplistreasons(), new kpclan(), new clanconfig(),
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
-						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(),
+						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(), new noranklistCommand(),
 						new checkroles(), new winsfails(), new relink(), new trackchannels(), new signoff(),
 						new signofflist())
 				.build();
@@ -337,6 +338,7 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "roles_sorting",
 									"(Optional) 'true' für Rollen-Sortierung, 'clans' für Clans+Rollen-Sortierung")
 									.setAutoComplete(true).setRequired(false)),
+					Commands.slash("noranklist", "Zeigt Spieler mit Rang < 4 und Trophäen < 12500 in allen Clans an."),
 					Commands.slash("checkroles", "Überprüfe, ob Clan-Mitglieder die korrekten Discord-Rollen haben.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, welcher überprüft werden soll.", true).setAutoComplete(true))
