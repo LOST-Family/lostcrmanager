@@ -55,7 +55,7 @@ public class noranklistCommand extends ListenerAdapter {
 						Integer rank = p.getPoLLeagueNumber();
 						Integer trophies = p.getTrophies();
 						
-						if (rank != null && rank < 4 && trophies != null && trophies < 12500) {
+						if (rank != null && rank < 4 && trophies != null && trophies < 13000) {
 							matchedPlayers.add(p);
 						}
 					}
@@ -104,7 +104,7 @@ public class noranklistCommand extends ListenerAdapter {
 				}
 
 				ByteArrayInputStream inputStream = new ByteArrayInputStream(content.toString().getBytes(StandardCharsets.UTF_8));
-				String description = "Hier die Liste der Spieler mit Rang < 4 und Trophäen < 12500. (Insgesamt: " + matchedPlayers.size() + " Spieler)";
+				String description = "Hier die Liste der Spieler mit Rang < 4 und Trophäen < 13000. (Insgesamt: " + matchedPlayers.size() + " Spieler)";
 				event.getHook().editOriginal(inputStream, "noranklist.txt")
 						.setEmbeds(MessageUtil.buildEmbed(title, description, MessageUtil.EmbedType.INFO)).queue();
 			} catch (Exception e) {

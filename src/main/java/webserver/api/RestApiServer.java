@@ -4,29 +4,30 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import datautil.DBManager;
+import datawrapper.Clan;
 import datawrapper.Player;
 import datawrapper.User;
-import datawrapper.Clan;
-import datautil.DBManager;
-import java.util.ArrayList;
-import java.util.List;
-import webserver.api.dto.ClanDTO;
-import webserver.api.dto.PlayerDTO;
-import webserver.api.dto.UserDTO;
-import java.util.concurrent.Executors;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
+import lostcrmanager.Bot;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import lostcrmanager.Bot;
+import webserver.api.dto.ClanDTO;
+import webserver.api.dto.PlayerDTO;
+import webserver.api.dto.UserDTO;
 
 /**
  * REST API Server (ported from lostmanager) Clan-specific endpoints removed.
@@ -190,7 +191,8 @@ public class RestApiServer {
 		}
 
 		if (isClientDisconnect) {
-			System.out.println("Client disconnected in " + handlerName + ": " + e.getMessage());
+			// Ignorieren, um Log-Spam zu vermeiden (Passiert, wenn der Client die Anfrage abbricht)
+			// System.out.println("Client disconnected in " + handlerName + ": " + e.getMessage());
 		} else {
 			System.err.println("Error in " + handlerName + ": " + e.getMessage());
 			e.printStackTrace();
