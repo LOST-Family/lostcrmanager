@@ -338,7 +338,7 @@ public class Bot extends ListenerAdapter {
 							.addOptions(new OptionData(OptionType.STRING, "roles_sorting",
 									"(Optional) 'true' für Rollen-Sortierung, 'clans' für Clans+Rollen-Sortierung")
 									.setAutoComplete(true).setRequired(false)),
-					Commands.slash("noranklist", "Zeigt Spieler mit Rang < 4 und Trophäen < 12500 in allen Clans an."),
+					Commands.slash("noranklist", "Zeigt Spieler mit Rang < 4 und Trophäen < 13000 in allen Clans an."),
 					Commands.slash("checkroles", "Überprüfe, ob Clan-Mitglieder die korrekten Discord-Rollen haben.")
 							.addOptions(new OptionData(OptionType.STRING, "clan",
 									"Der Clan, welcher überprüft werden soll.", true).setAutoComplete(true))
