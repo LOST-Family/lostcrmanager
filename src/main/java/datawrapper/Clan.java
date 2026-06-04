@@ -8,7 +8,6 @@ import java.net.http.HttpResponse;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
@@ -21,7 +20,7 @@ import lostcrmanager.Bot;
 
 public class Clan {
 
-	private String clan_tag;
+	private final String clan_tag;
 	private String namedb;
 	private String descriptiondb;
 	private String descriptionapi;
@@ -50,7 +49,7 @@ public class Clan {
 				return rs.next(); // true, wenn mindestens eine Zeile existiert
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return false;
 	}
@@ -58,18 +57,12 @@ public class Clan {
 	// all public getter Methods
 
 	public String getRoleID(Role role) {
-		switch (role) {
-			case LEADER:
-				return DBUtil.getValueFromSQL("SELECT leader_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
-			case COLEADER:
-				return DBUtil.getValueFromSQL("SELECT coleader_roleid FROM clans WHERE tag = ?", String.class,
-						clan_tag);
-			case ELDER:
-				return DBUtil.getValueFromSQL("SELECT elder_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
-			case MEMBER:
-				return DBUtil.getValueFromSQL("SELECT member_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
-		}
-		return null;
+		return switch (role) {
+			case LEADER -> DBUtil.getValueFromSQL("SELECT leader_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+			case COLEADER -> DBUtil.getValueFromSQL("SELECT coleader_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+			case ELDER -> DBUtil.getValueFromSQL("SELECT elder_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+			case MEMBER -> DBUtil.getValueFromSQL("SELECT member_roleid FROM clans WHERE tag = ?", String.class, clan_tag);
+		};
 	}
 
 	public String getInfoStringAPI() {
@@ -103,7 +96,7 @@ public class Clan {
 					}
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 		}
 		return index;
@@ -167,14 +160,11 @@ public class Clan {
 					while (rs.next()) {
 						kickpoint_reasons.add(new KickpointReason(rs.getString("name"), rs.getString("clan_tag")));
 					}
-					Statement stmt = rs.getStatement();
-					rs.close();
-					stmt.close();
 				} catch (SQLException e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 		}
 		return kickpoint_reasons;
@@ -191,7 +181,7 @@ public class Clan {
 					}
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 		}
 		return namedb;
@@ -218,11 +208,11 @@ public class Clan {
 					.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET()
 					.build();
 
-			HttpResponse<String> response = null;
+			HttpResponse<String> response;
 			try {
 				response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			} catch (IOException | InterruptedException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 				return null;
 			}
 
@@ -274,7 +264,7 @@ public class Clan {
 					}
 				}
 			} catch (SQLException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 		}
 		return descriptiondb;

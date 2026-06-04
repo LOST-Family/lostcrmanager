@@ -24,8 +24,8 @@ public class MessageUtil {
 		EmbedBuilder embedreply = new EmbedBuilder();
 		embedreply.setTitle(title);
 		embedreply.setDescription(description);
-		for (int i = 0; i < fields.length; i++) {
-			embedreply.addField(fields[i]);
+		for (Field field : fields) {
+			embedreply.addField(field);
 		}
 		if (footer.equals("")) {
 			embedreply.setFooter(footer);
@@ -33,18 +33,10 @@ public class MessageUtil {
 			embedreply.setFooter(additionalfooter + "\n" + footer);
 		}
 		switch (type) {
-			case INFO:
-				embedreply.setColor(Color.CYAN);
-				break;
-			case SUCCESS:
-				embedreply.setColor(Color.GREEN);
-				break;
-			case ERROR:
-				embedreply.setColor(Color.RED);
-				break;
-			case LOADING:
-				embedreply.setColor(Color.MAGENTA);
-				break;
+			case INFO -> embedreply.setColor(Color.CYAN);
+			case SUCCESS -> embedreply.setColor(Color.GREEN);
+			case ERROR -> embedreply.setColor(Color.RED);
+			case LOADING -> embedreply.setColor(Color.MAGENTA);
 		}
 		return embedreply.build();
 	}
@@ -70,7 +62,7 @@ public class MessageUtil {
 					Thread.sleep(100);
 					sentMessage.delete().queue();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 			}).start();
 		}, a -> {
@@ -87,7 +79,7 @@ public class MessageUtil {
 					Thread.sleep(100);
 					sentMessage.editMessage("<@" + uuid + ">").setActionRow(trashButton).queue();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 			}).start();
 		});

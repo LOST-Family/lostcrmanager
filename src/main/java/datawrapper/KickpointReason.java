@@ -9,8 +9,8 @@ import datautil.DBUtil;
 
 public class KickpointReason {
 
-	private String kpreason;
-	private String clan_tag;
+	private final String kpreason;
+	private final String clan_tag;
 	private Integer amount;
 	private Integer index;
 
@@ -28,7 +28,7 @@ public class KickpointReason {
 				return rs.next(); // true, wenn mindestens eine Zeile existiert
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return false;
 	}

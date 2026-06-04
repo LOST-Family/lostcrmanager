@@ -6,7 +6,7 @@ import datautil.DBUtil;
 
 public class Kickpoint {
 
-	private Long id;
+	private final Long id;
 	private String description;
 	private Long amount;
 	private Player player;

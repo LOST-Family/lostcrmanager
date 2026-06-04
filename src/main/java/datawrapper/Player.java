@@ -1,6 +1,7 @@
 package datawrapper;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -26,7 +27,7 @@ public class Player {
 	};
 
 	private JSONObject apiresult;
-	private String tag;
+	private final String tag;
 	private String namedb;
 	private String nameapi;
 	private User user;
@@ -152,7 +153,7 @@ public class Player {
 				return rs.next(); // true, wenn mindestens eine Zeile existiert
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return false;
 	}
@@ -170,21 +171,18 @@ public class Player {
 			int responseCode = connection.getResponseCode();
 
 			if (responseCode == 200) {
-				BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-				String line;
-				StringBuilder responseContent = new StringBuilder();
-				while ((line = in.readLine()) != null) {
-					responseContent.append(line);
+				try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+					while (in.readLine() != null) {
+						// consume response
+					}
 				}
-				in.close();
-
 				return true;
 			} else {
 				System.out.println("Verifizierung fehlgeschlagen. Fehlercode: " + responseCode);
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
 		}
 		return false;
 	}
@@ -195,7 +193,7 @@ public class Player {
 		try {
 			return getNameDB() + " (" + tag + ")";
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return null;
 	}
@@ -204,7 +202,7 @@ public class Player {
 		try {
 			return getNameAPI() + " (" + tag + ")";
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return null;
 	}
@@ -316,7 +314,7 @@ public class Player {
 						}
 					}
 				} catch (SQLException e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 			}
 		}
@@ -344,8 +342,8 @@ public class Player {
 				if (leagueStatistics.has("previousSeason")) {
 					JSONObject previousSeason = leagueStatistics.getJSONObject("previousSeason");
 					String previousseasonid = previousSeason.getString("id");
-					int previousseasonyear = Integer.valueOf(previousseasonid.split("-")[0]);
-					int previousseasonmonth = Integer.valueOf(previousseasonid.split("-")[1]);
+					int previousseasonyear = Integer.parseInt(previousseasonid.split("-")[0]);
+					int previousseasonmonth = Integer.parseInt(previousseasonid.split("-")[1]);
 					int currentseasonyear;
 					int currentseasonmonth;
 					if (previousseasonmonth + 1 == 13) {
@@ -448,7 +446,7 @@ public class Player {
 				}
 			}
 		}
-		return mark == null ? false : mark;
+		return Boolean.TRUE.equals(mark);
 	}
 
 	public String getNote() {
@@ -633,7 +631,7 @@ public class Player {
 			}
 		} catch (SQLException e) {
 			System.err.println("Fehler beim Prüfen der Wins-Daten für Spieler " + tag + ": " + e.getMessage());
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return false;
 	}
@@ -653,14 +651,14 @@ public class Player {
 
 			try (ResultSet rs = pstmt.executeQuery()) {
 				if (rs.next()) {
-					int wins = rs.getInt("wins");
+					int winsCount = rs.getInt("wins");
 					OffsetDateTime recordedAt = rs.getObject("recorded_at", OffsetDateTime.class);
-					return new WinsRecord(wins, recordedAt);
+					return new WinsRecord(winsCount, recordedAt);
 				}
 			}
 		} catch (SQLException e) {
 			System.err.println("Fehler beim Abrufen der Wins-Daten für Spieler " + tag + ": " + e.getMessage());
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 		return null;
 	}
@@ -682,13 +680,13 @@ public class Player {
 	 */
 	public void savePlayerWins() {
 		try {
-			Integer wins = getWinsAPI();
-			if (wins != null) {
+			Integer currentWins = getWinsAPI();
+			if (currentWins != null) {
 				OffsetDateTime now = OffsetDateTime.now(java.time.ZoneId.of("Europe/Berlin"));
 				String sql = "INSERT INTO player_wins (player_tag, recorded_at, wins) VALUES (?, ?, ?) "
 						+ "ON CONFLICT (player_tag, recorded_at) DO UPDATE SET wins = ?";
-				DBUtil.executeUpdate(sql, tag, now, wins, wins);
-				System.out.println("Wins gespeichert für " + tag + ": " + wins);
+				DBUtil.executeUpdate(sql, tag, now, currentWins, currentWins);
+				System.out.println("Wins gespeichert für " + tag + ": " + currentWins);
 			}
 		} catch (Exception e) {
 			System.err.println("Fehler beim Speichern der Wins für " + tag + ": " + e.getMessage());

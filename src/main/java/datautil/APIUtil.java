@@ -21,11 +21,11 @@ public class APIUtil {
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
 
-		HttpResponse<String> response = null;
+		HttpResponse<String> response;
 		try {
 			response = client.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 			return null;
 		}
 
@@ -39,7 +39,7 @@ public class APIUtil {
 			return null;
 		}
 	}
-	
+
 	public static String getPlayerJson(String playerTag) {
 		// URL-kodieren des Spieler-Tags (# -> %23)
 		String encodedTag = java.net.URLEncoder.encode(playerTag, java.nio.charset.StandardCharsets.UTF_8);
@@ -51,11 +51,11 @@ public class APIUtil {
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
 
-		HttpResponse<String> response = null;
+		HttpResponse<String> response;
 		try {
 			response = client.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 			return null;
 		}
 
@@ -69,7 +69,7 @@ public class APIUtil {
 			return null;
 		}
 	}
-	
+
 	public static String getCurrentRiverRaceJson(String clanTag) {
 		// URL-kodieren des Clan-Tags (# -> %23)
 		String encodedTag = java.net.URLEncoder.encode(clanTag, java.nio.charset.StandardCharsets.UTF_8);
@@ -81,11 +81,11 @@ public class APIUtil {
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
 
-		HttpResponse<String> response = null;
+		HttpResponse<String> response;
 		try {
 			response = client.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 			return null;
 		}
 
@@ -98,5 +98,5 @@ public class APIUtil {
 			return null;
 		}
 	}
-	
+
 }

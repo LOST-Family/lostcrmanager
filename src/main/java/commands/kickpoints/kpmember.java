@@ -107,7 +107,7 @@ public class kpmember extends ListenerAdapter {
 
 			String desc = "Aktive Kickpunkte von " + MessageUtil.unformat(p.getInfoStringDB()) + " in "
 					+ c.getInfoStringDB() + ":\n";
-			if (activekps.size() > 0) {
+			if (!activekps.isEmpty()) {
 				int totalkps = 0;
 				for (Kickpoint kpi : activekps) {
 					totalkps += kpi.getAmount();
@@ -159,7 +159,9 @@ public class kpmember extends ListenerAdapter {
 				desc += "Dieser Spieler hat keine aktiven Kickpunkte.\n";
 			}
 			desc += "\n";
-			desc += "**Gesamtanzahl (Vergangene und aktuelle Kickpunkte):**" + "\n";
+			desc += """
+                                **Gesamtanzahl (Vergangene und aktuelle Kickpunkte):**
+                                """;
 			long kptotal = p.getTotalKickpoints();
 			desc += "" + kptotal;
 			Button refreshButton = Button.secondary("kpmember_" + playertag, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
@@ -198,6 +200,7 @@ public class kpmember extends ListenerAdapter {
 		}
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
 		String id = event.getComponentId();
@@ -213,11 +216,7 @@ public class kpmember extends ListenerAdapter {
 				.editOriginalEmbeds(MessageUtil.buildEmbed(title, "Wird geladen...", MessageUtil.EmbedType.LOADING))
 				.queue();
 
-		new Thread(new Runnable() {
-
-			@SuppressWarnings("null")
-			@Override
-			public void run() {
+		new Thread(() -> {
 
 				Player p = new Player(playertag);
 				Clan c = p.getClanDB();
@@ -247,7 +246,7 @@ public class kpmember extends ListenerAdapter {
 
 				String desc = "Aktive Kickpunkte von " + MessageUtil.unformat(p.getInfoStringDB()) + " in "
 						+ c.getInfoStringDB() + ":\n";
-				if (activekps.size() > 0) {
+				if (!activekps.isEmpty()) {
 					int totalkps = 0;
 					for (Kickpoint kpi : activekps) {
 						totalkps += kpi.getAmount();
@@ -302,7 +301,7 @@ public class kpmember extends ListenerAdapter {
 					desc += "Dieser Spieler hat keine aktiven Kickpunkte.\n";
 				}
 				desc += "\n";
-				desc += "**Gesamtanzahl (Vergangene und aktuelle Kickpunkte):**" + "\n";
+				desc += "**Gesamtanzahl (Vergangene und aktuelle Kickpunkte):**\n";
 				long kptotal = p.getTotalKickpoints();
 				desc += "" + kptotal;
 				Button refreshButton = Button.secondary("kpmember_" + playertag, "\u200B")
@@ -315,7 +314,6 @@ public class kpmember extends ListenerAdapter {
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
 						"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
 
-			}
 		}).start();
 	}
 

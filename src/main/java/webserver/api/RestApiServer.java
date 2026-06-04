@@ -35,9 +35,9 @@ import webserver.api.dto.UserDTO;
 public class RestApiServer {
 
 	private HttpServer server;
-	private int port;
-	private ObjectMapper objectMapper;
-	private String apiToken;
+	private final int port;
+	private final ObjectMapper objectMapper;
+	private final String apiToken;
 
 	public RestApiServer(int port) {
 		this.port = port;
@@ -120,7 +120,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(playerDTO);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (Exception e) {
+			} catch (IOException e) {
 				handleException(exchange, "PlayerHandler", e);
 			}
 		}
@@ -171,7 +171,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(userDTO);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (Exception e) {
+			} catch (IOException e) {
 				handleException(exchange, "UserHandler", e);
 			}
 		}
@@ -194,8 +194,7 @@ public class RestApiServer {
 			// Ignorieren, um Log-Spam zu vermeiden (Passiert, wenn der Client die Anfrage abbricht)
 			// System.out.println("Client disconnected in " + handlerName + ": " + e.getMessage());
 		} else {
-			System.err.println("Error in " + handlerName + ": " + e.getMessage());
-			e.printStackTrace();
+			System.err.println("Error in " + handlerName + ": " + String.valueOf(e));
 			try {
 				sendResponse(exchange, 500, "{\"error\":\"Internal Server Error\"}");
 			} catch (IOException ignore) {
@@ -301,10 +300,8 @@ public class RestApiServer {
 					String subPath = parts[4];
 					if ("members".equals(subPath)) {
 						handleClanMembers(exchange, clan);
-						return;
 					} else {
 						sendResponse(exchange, 404, "{\"error\":\"Unknown endpoint\"}");
-						return;
 					}
 				} else {
 					// Return clan info (DB only)
@@ -381,7 +378,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(clans);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (Exception e) {
+			} catch (IOException e) {
 				handleException(exchange, "ClansHandler", e);
 			}
 		}
@@ -481,7 +478,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(resultList);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (Exception e) {
+			} catch (IOException e) {
 				handleException(exchange, "ColeadersHandler", e);
 			}
 		}

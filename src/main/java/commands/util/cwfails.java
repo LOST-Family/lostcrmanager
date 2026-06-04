@@ -89,7 +89,7 @@ public class cwfails extends ListenerAdapter {
 		Integer minThreshold = null;
 		if (minThresholdOption != null) {
 			try {
-				minThreshold = Integer.parseInt(minThresholdOption.getAsString());
+				minThreshold = minThresholdOption.getAsInt();
 			} catch (NumberFormatException e) {
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Der min_threshold Parameter muss eine gültige Zahl sein.", MessageUtil.EmbedType.ERROR))
@@ -293,9 +293,7 @@ public class cwfails extends ListenerAdapter {
 							.sendMessageEmbeds(MessageUtil.buildEmbed(title, kpmessagedesc, MessageUtil.EmbedType.INFO))
 							.queue();
 				}
-			} else {
-				desc += "**Keine Fehler anzuzeigen.**";
-			}
+		}
 
 		});
 		thread.start();
@@ -313,7 +311,7 @@ public class cwfails extends ListenerAdapter {
 
 		if (focused.equals("clan")) {
 			// Handle comma-separated autocomplete similar to statslist
-			List<Command.Choice> choices = getClanAutocomplete(input, event.getUser().getId());
+			List<Command.Choice> choices = getClanAutocomplete(input);
 			event.replyChoices(choices).queue();
 		}
 		if (focused.equals("kpreason")) {
@@ -350,7 +348,7 @@ public class cwfails extends ListenerAdapter {
 		return clanTags;
 	}
 
-	private List<Command.Choice> getClanAutocomplete(String input, String userId) {
+	private List<Command.Choice> getClanAutocomplete(String input) {
 		List<Command.Choice> choices = new ArrayList<>();
 
 		// Split by comma and get the last part

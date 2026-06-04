@@ -34,7 +34,7 @@ import net.dv8tion.jda.api.entities.Role;
 
 public class ManagementApiHandler implements HttpHandler {
 
-	private String apiToken;
+	private final String apiToken;
 
 	public ManagementApiHandler(String apiToken) {
 		this.apiToken = apiToken;
@@ -69,57 +69,26 @@ public class ManagementApiHandler implements HttpHandler {
 			JSONObject response;
 
 			switch (subPath) {
-				case "members/add":
-					response = handleAddMember(json);
-					break;
-				case "members/edit":
-					response = handleEditMember(json);
-					break;
-				case "members/remove":
-					response = handleRemoveMember(json);
-					break;
-				case "members/transfer":
-					response = handleTransferMember(json);
-					break;
-				case "kickpoints/add":
-					response = handleKickpointAdd(json);
-					break;
-				case "kickpoints/edit":
-					response = handleKickpointEdit(json);
-					break;
-				case "kickpoints/remove":
-					response = handleKickpointRemove(json);
-					break;
-				case "clanconfig":
-					response = handleClanconfig(json);
-					break;
-				case "kickpoint-reasons/add":
-					response = handleKickpointReasonAdd(json);
-					break;
-				case "kickpoint-reasons/edit":
-					response = handleKickpointReasonEdit(json);
-					break;
-				case "kickpoint-reasons/remove":
-					response = handleKickpointReasonRemove(json);
-					break;
-				case "links/link":
-					response = handleLink(json);
-					break;
-				case "links/relink":
-					response = handleRelink(json);
-					break;
-				case "links/unlink":
-					response = handleUnlink(json);
-					break;
-				case "copyreasons":
-					response = handleCopyReasons(json);
-					break;
-				case "restart":
-					response = handleRestart(json);
-					break;
-				default:
+				case "members/add" -> response = handleAddMember(json);
+				case "members/edit" -> response = handleEditMember(json);
+				case "members/remove" -> response = handleRemoveMember(json);
+				case "members/transfer" -> response = handleTransferMember(json);
+				case "kickpoints/add" -> response = handleKickpointAdd(json);
+				case "kickpoints/edit" -> response = handleKickpointEdit(json);
+				case "kickpoints/remove" -> response = handleKickpointRemove(json);
+				case "clanconfig" -> response = handleClanconfig(json);
+				case "kickpoint-reasons/add" -> response = handleKickpointReasonAdd(json);
+				case "kickpoint-reasons/edit" -> response = handleKickpointReasonEdit(json);
+				case "kickpoint-reasons/remove" -> response = handleKickpointReasonRemove(json);
+				case "links/link" -> response = handleLink(json);
+				case "links/relink" -> response = handleRelink(json);
+				case "links/unlink" -> response = handleUnlink(json);
+				case "copyreasons" -> response = handleCopyReasons(json);
+				case "restart" -> response = handleRestart(json);
+				default -> {
 					sendResponse(exchange, 404, new JSONObject().put("error", "Unknown endpoint").toString());
 					return;
+				}
 			}
 
 			int status = response.optBoolean("success", false) ? 200 : response.optInt("statusCode", 400);
@@ -128,7 +97,7 @@ public class ManagementApiHandler implements HttpHandler {
 
 		} catch (org.json.JSONException e) {
 			sendResponse(exchange, 400, new JSONObject().put("error", "Invalid JSON body").toString());
-		} catch (Exception e) {
+		} catch (IOException e) {
 			handleException(exchange, e);
 		}
 	}
@@ -814,7 +783,7 @@ public class ManagementApiHandler implements HttpHandler {
 		try {
 			playername = p.getNameAPI();
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		DBUtil.executeUpdate("INSERT INTO players (cr_tag, discord_id, name) VALUES (?, ?, ?)",
@@ -973,7 +942,7 @@ public class ManagementApiHandler implements HttpHandler {
 			try {
 				Thread.sleep(3000);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 			System.exit(0);
 		}, "RestartApi").start();
@@ -1042,8 +1011,7 @@ public class ManagementApiHandler implements HttpHandler {
 			// Ignorieren, um Log-Spam zu vermeiden
 			// System.out.println("Client disconnected in ManagementApiHandler: " + e.getMessage());
 		} else {
-			System.err.println("Error in ManagementApiHandler: " + e.getMessage());
-			e.printStackTrace();
+			System.err.println("Error in ManagementApiHandler: " + String.valueOf(e));
 			try {
 				sendResponse(exchange, 500,
 						new JSONObject().put("error", "Internal Server Error").toString());

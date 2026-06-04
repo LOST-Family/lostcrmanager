@@ -129,14 +129,14 @@ public class addmember extends ListenerAdapter {
 					desc += "Der Spieler " + MessageUtil.unformat(p.getInfoStringDB()) + " wurde erfolgreich dem Clan "
 							+ new Clan(clantag).getInfoStringDB() + " als " + rolestring + " hinzugefügt.";
 				} catch (Exception e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 			} else {
 				try {
 					desc += "Der Spieler " + MessageUtil.unformat(p.getInfoStringDB())
 							+ " wurde erfolgreich der Warteliste hinzugefügt.";
 				} catch (Exception e) {
-					e.printStackTrace();
+					System.err.println(e.getMessage());
 				}
 			}
 
