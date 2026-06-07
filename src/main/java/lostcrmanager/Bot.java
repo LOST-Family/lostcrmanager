@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import commands.api.ApiCommand;
 import commands.admin.copyreasons;
 import commands.admin.restart;
 import commands.kickpoints.clanconfig;
@@ -62,6 +63,7 @@ import commands.util.trackchannels;
 import commands.wins.wins;
 import commands.wins.winsfails;
 import datautil.APIUtil;
+import datautil.ApiRegistry;
 import datautil.DBUtil;
 import datawrapper.Clan;
 import datawrapper.Player;
@@ -155,7 +157,7 @@ public class Bot extends ListenerAdapter {
 						new leaguetrophylist(), new transfermember(), new togglemark(), new cwfails(),
 						new remindersadd(), new remindersremove(), new remindersinfo(), new wins(), new statslist(), new noranklistCommand(),
 						new checkroles(), new winsfails(), new relink(), new trackchannels(), new signoff(),
-						new signofflist())
+						new signofflist(), new ApiCommand())
 				.build();
 	}
 
@@ -395,7 +397,8 @@ public class Bot extends ListenerAdapter {
 									"Der Monat, für den die Abmeldungen angezeigt werden sollen.", true)
 									.setAutoComplete(true))
 							.addOptions(new OptionData(OptionType.BOOLEAN, "showreasons",
-									"(Optional) Zeige Begründungen an.").setRequired(false)))
+									"(Optional) Zeige Begründungen an.").setRequired(false)),
+					ApiRegistry.buildSlashCommand())
 					.queue();
 		}
 	}
