@@ -92,14 +92,7 @@ public class winsfails extends ListenerAdapter {
 
 		Integer minThreshold = null;
 		if (minThresholdOption != null) {
-			try {
-				minThreshold = Integer.parseInt(minThresholdOption.getAsString());
-			} catch (NumberFormatException e) {
-				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-						"Der min_threshold Parameter muss eine gültige Zahl sein.", MessageUtil.EmbedType.ERROR))
-						.queue();
-				return;
-			}
+			minThreshold = minThresholdOption.getAsInt();
 		}
 
 		boolean excludeLeaders = false;
@@ -130,7 +123,7 @@ public class winsfails extends ListenerAdapter {
 				String[] parts = monthValue.split("-");
 				year = Integer.parseInt(parts[0]);
 				month = Integer.parseInt(parts[1]);
-			} catch (Exception e) {
+			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ungültiges Monat-Format. Bitte wähle einen Monat aus der Liste.", MessageUtil.EmbedType.ERROR))
 						.queue();
@@ -346,7 +339,6 @@ public class winsfails extends ListenerAdapter {
 				}
 			} catch (Exception e) {
 				System.err.println("Fehler beim Verarbeiten des Winsfails-Befehls: " + e.getMessage());
-				e.printStackTrace();
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ein Fehler ist aufgetreten: " + e.getMessage(), MessageUtil.EmbedType.ERROR)).queue();
 			}
@@ -364,26 +356,29 @@ public class winsfails extends ListenerAdapter {
 		String focused = event.getFocusedOption().getName();
 		String input = event.getFocusedOption().getValue();
 
-		if (focused.equals("clan")) {
-			// Handle comma-separated autocomplete similar to statslist
-			List<Command.Choice> choices = getClanAutocomplete(input, event.getUser().getId());
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("kpreason")) {
-			// For KP reasons, use the first clan from the input
-			String clanInput = event.getOption("clan") != null ? event.getOption("clan").getAsString() : "";
-			List<String> clansList = parseClanTags(clanInput);
-			String firstClan = clansList.isEmpty() ? "" : clansList.get(0);
-			List<Command.Choice> choices = DBManager.getKPReasonsAutocomplete(input, firstClan);
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("exclude_leaders")) {
-			List<Command.Choice> choices = new ArrayList<>();
-			if ("true".startsWith(input.toLowerCase())) {
-				choices.add(new Command.Choice("true", "true"));
+		switch (focused) {
+			case "clan" -> {
+				List<Command.Choice> choices = getClanAutocomplete(input);
+				event.replyChoices(choices).queue();
 			}
-			event.replyChoices(choices).queue();
-		} else if (focused.equals("month")) {
-			List<Command.Choice> choices = getMonthAutocomplete(input);
-			event.replyChoices(choices).queue();
+			case "kpreason" -> {
+				String clanInput = event.getOption("clan") != null ? event.getOption("clan").getAsString() : "";
+				List<String> clansList = parseClanTags(clanInput);
+				String firstClan = clansList.isEmpty() ? "" : clansList.get(0);
+				List<Command.Choice> choices = DBManager.getKPReasonsAutocomplete(input, firstClan);
+				event.replyChoices(choices).queue();
+			}
+			case "exclude_leaders" -> {
+				List<Command.Choice> choices = new ArrayList<>();
+				if ("true".startsWith(input.toLowerCase())) {
+					choices.add(new Command.Choice("true", "true"));
+				}
+				event.replyChoices(choices).queue();
+			}
+			case "month" -> {
+				List<Command.Choice> choices = getMonthAutocomplete(input);
+				event.replyChoices(choices).queue();
+			}
 		}
 	}
 
@@ -443,7 +438,7 @@ public class winsfails extends ListenerAdapter {
 		return clanTags;
 	}
 
-	private List<Command.Choice> getClanAutocomplete(String input, String userId) {
+	private List<Command.Choice> getClanAutocomplete(String input) {
 		List<Command.Choice> choices = new ArrayList<>();
 
 		// Split by comma and get the last part

@@ -31,14 +31,11 @@ public class trackchannels extends ListenerAdapter {
     public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
         String commandName = event.getName();
 
-        if (commandName.equals("trackchanneladd")) {
-            handleAdd(event);
-        } else if (commandName.equals("trackchannelremove")) {
-            handleRemove(event);
-        } else if (commandName.equals("trackchannellist")) {
-            handleList(event);
-        } else if (commandName.equals("trackchanneltime")) {
-            handleTime(event);
+        switch (commandName) {
+            case "trackchanneladd" -> handleAdd(event);
+            case "trackchannelremove" -> handleRemove(event);
+            case "trackchannellist" -> handleList(event);
+            case "trackchanneltime" -> handleTime(event);
         }
     }
 

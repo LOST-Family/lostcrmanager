@@ -46,7 +46,7 @@ public class remindersremove extends ListenerAdapter {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		if (clantag == null) {

@@ -128,9 +128,9 @@ public class memberstatus extends ListenerAdapter {
 			String desc = "## " + c.getInfoStringDB() + "\n";
 
 			desc += "**Mitglied, ingame nicht im Clan:**\n\n";
-			desc += membernotinclanstr == "" ? "---\n\n" : MessageUtil.unformat(membernotinclanstr) + "\n";
+			desc += "".equals(membernotinclanstr) ? "---\n\n" : MessageUtil.unformat(membernotinclanstr) + "\n";
 			desc += "**Kein Mitglied, ingame im Clan:**\n\n";
-			desc += inclannotmemberstr == "" ? "---\n\n" : MessageUtil.unformat(inclannotmemberstr) + "\n";
+			desc += "".equals(inclannotmemberstr) ? "---\n\n" : MessageUtil.unformat(inclannotmemberstr) + "\n";
 
 			Button refreshButton = Button.secondary("memberstatus_" + clantag + "_" + excludeLeadersFinal, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
 
@@ -265,9 +265,9 @@ public class memberstatus extends ListenerAdapter {
 			String desc = "## " + c.getInfoStringDB() + "\n";
 
 			desc += "**Mitglied, ingame nicht im Clan:**\n\n";
-			desc += membernotinclanstr == "" ? "---\n\n" : MessageUtil.unformat(membernotinclanstr) + "\n";
+			desc += "".equals(membernotinclanstr) ? "---\n\n" : MessageUtil.unformat(membernotinclanstr) + "\n";
 			desc += "**Kein Mitglied, ingame im Clan:**\n\n";
-			desc += inclannotmemberstr == "" ? "---\n\n" : MessageUtil.unformat(inclannotmemberstr) + "\n";
+			desc += "".equals(inclannotmemberstr) ? "---\n\n" : MessageUtil.unformat(inclannotmemberstr) + "\n";
 
 			Button refreshButton = Button.secondary("memberstatus_" + clantag + "_" + excludeLeadersFinal, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
 

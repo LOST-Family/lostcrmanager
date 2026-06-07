@@ -28,6 +28,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.FileUpload;
 import util.MessageUtil;
 
 public class listmembers extends ListenerAdapter {
@@ -172,19 +173,19 @@ public class listmembers extends ListenerAdapter {
 				desc = "## " + c.getInfoStringDB() + "\n";
 				if (!clantag.equals("warteliste")) {
 					desc += "**Admin:**\n";
-					desc += adminlist == "" ? "---\n\n" : MessageUtil.unformat(adminlist) + "\n";
+					desc += "".equals(adminlist) ? "---\n\n" : MessageUtil.unformat(adminlist) + "\n";
 					desc += "**Anführer:**\n";
-					desc += leaderlist == "" ? "---\n\n" : MessageUtil.unformat(leaderlist) + "\n";
+					desc += "".equals(leaderlist) ? "---\n\n" : MessageUtil.unformat(leaderlist) + "\n";
 					desc += "**Vize-Anführer:**\n";
-					desc += coleaderlist == "" ? "---\n\n" : MessageUtil.unformat(coleaderlist) + "\n";
+					desc += "".equals(coleaderlist) ? "---\n\n" : MessageUtil.unformat(coleaderlist) + "\n";
 					desc += "**Ältester:**\n";
-					desc += elderlist == "" ? "---\n\n" : MessageUtil.unformat(elderlist) + "\n";
+					desc += "".equals(elderlist) ? "---\n\n" : MessageUtil.unformat(elderlist) + "\n";
 					desc += "**Mitglied:**\n";
-					desc += memberlist == "" ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
+					desc += "".equals(memberlist) ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
 					desc += "\nInsgesamte Mitglieder des Clans: " + clanSizeCount;
 				} else {
 					desc += "**Wartend:**\n";
-					desc += memberlist == "" ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
+					desc += "".equals(memberlist) ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
 					desc += "\nInsgesamte Spieler auf der Warteliste: " + playerlist.size();
 				}
 			}
@@ -347,19 +348,19 @@ public class listmembers extends ListenerAdapter {
 				desc = "## " + c.getInfoStringDB() + "\n";
 				if (!clantag.equals("warteliste")) {
 					desc += "**Admin:**\n";
-					desc += adminlist == "" ? "---\n\n" : MessageUtil.unformat(adminlist) + "\n";
+					desc += "".equals(adminlist) ? "---\n\n" : MessageUtil.unformat(adminlist) + "\n";
 					desc += "**Anführer:**\n";
-					desc += leaderlist == "" ? "---\n\n" : MessageUtil.unformat(leaderlist) + "\n";
+					desc += "".equals(leaderlist) ? "---\n\n" : MessageUtil.unformat(leaderlist) + "\n";
 					desc += "**Vize-Anführer:**\n";
-					desc += coleaderlist == "" ? "---\n\n" : MessageUtil.unformat(coleaderlist) + "\n";
+					desc += "".equals(coleaderlist) ? "---\n\n" : MessageUtil.unformat(coleaderlist) + "\n";
 					desc += "**Ältester:**\n";
-					desc += elderlist == "" ? "---\n\n" : MessageUtil.unformat(elderlist) + "\n";
+					desc += "".equals(elderlist) ? "---\n\n" : MessageUtil.unformat(elderlist) + "\n";
 					desc += "**Mitglied:**\n";
-					desc += memberlist == "" ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
+					desc += "".equals(memberlist) ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
 					desc += "\nInsgesamte Mitglieder des Clans: " + clanSizeCount;
 				} else {
 					desc += "**Wartend:**\n";
-					desc += memberlist == "" ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
+					desc += "".equals(memberlist) ? "---\n\n" : MessageUtil.unformat(memberlist) + "\n";
 					desc += "\nInsgesamte Spieler auf der Warteliste: " + playerlist.size();
 				}
 			}
@@ -409,7 +410,7 @@ public class listmembers extends ListenerAdapter {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		// Also look for players without clan who are marked
@@ -443,7 +444,7 @@ public class listmembers extends ListenerAdapter {
 
 		if (finalDesc.length() > 4000) {
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(finalDesc.getBytes(StandardCharsets.UTF_8));
-			hook.editOriginal(inputStream, "Alle_Markierten_Spieler.txt")
+			hook.editOriginalAttachments(FileUpload.fromData(inputStream, "Alle_Markierten_Spieler.txt"))
 					.setEmbeds(MessageUtil.buildEmbed(title, "Die Liste ist zu lang und wurde als Datei gesendet.",
 							MessageUtil.EmbedType.INFO, "Zuletzt aktualisiert am " + formatiert))
 					.setActionRow(refreshButton).queue();
@@ -500,7 +501,7 @@ public class listmembers extends ListenerAdapter {
 			// Send as text file
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(finalDesc.getBytes(StandardCharsets.UTF_8));
 			String description = "Die Liste wurde als Datei gesendet, da sie zu lang für eine Nachricht ist.";
-			hook.editOriginal(inputStream, "Spieler_Liste.txt")
+			hook.editOriginalAttachments(FileUpload.fromData(inputStream, "Spieler_Liste.txt"))
 					.setEmbeds(MessageUtil.buildEmbed(title, description, MessageUtil.EmbedType.INFO)).queue();
 		} else {
 			// Send as embed

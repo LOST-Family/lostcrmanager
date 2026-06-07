@@ -11,7 +11,7 @@ import datautil.DBUtil;
 
 public class TrackChannel {
 
-    private int id;
+    private final int id;
     private String name;
     private String channelId;
     private OffsetDateTime timestamp;
@@ -40,7 +40,7 @@ public class TrackChannel {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
     }
 
@@ -87,7 +87,7 @@ public class TrackChannel {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getMessage());
         }
         return list;
     }

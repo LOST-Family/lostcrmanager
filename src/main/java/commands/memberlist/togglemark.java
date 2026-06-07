@@ -16,7 +16,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import util.MessageUtil;
@@ -112,7 +112,7 @@ public class togglemark extends ListenerAdapter {
 			TextInput noteInput = noteInputBuilder.build();
 
 			Modal modal = Modal.create("togglemark_" + playertag, "Spieler markieren")
-					.addActionRows(ActionRow.of(noteInput))
+					.addComponents(ActionRow.of(noteInput))
 					.build();
 
 			event.replyModal(modal).queue();

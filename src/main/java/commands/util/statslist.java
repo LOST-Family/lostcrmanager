@@ -1,6 +1,7 @@
 package commands.util;
 
 import java.io.ByteArrayInputStream;
+import net.dv8tion.jda.api.utils.FileUpload;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -122,7 +123,7 @@ import util.MessageUtil;
 					description += " für " + clans.size() + " Clans";
 				}
 				description += ".";
-				event.getHook().editOriginal(inputStream, "StatsList.txt")
+				event.getHook().editOriginalAttachments(FileUpload.fromData(inputStream, "StatsList.txt"))
 						.setEmbeds(MessageUtil.buildEmbed(title, description, MessageUtil.EmbedType.INFO)).queue();
 			} catch (Exception e) {
 				System.err.println(e.getMessage());

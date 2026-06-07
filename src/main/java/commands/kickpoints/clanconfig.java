@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import util.MessageUtil;
@@ -83,7 +83,7 @@ import util.MessageUtil;
 		}
 
 		Modal modal = Modal.create("clanconfig_" + c.getTag(), "Clanconfig bearbeiten")
-				.addActionRows(ActionRow.of(kpdays), ActionRow.of(kpmax)).build();
+				.addComponents(ActionRow.of(kpdays), ActionRow.of(kpmax)).build();
 
 		event.replyModal(modal).queue();
 

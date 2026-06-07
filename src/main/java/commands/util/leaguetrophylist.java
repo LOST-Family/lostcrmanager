@@ -12,7 +12,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +33,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.utils.FileUpload;
 import util.MessageUtil;
 
 public class leaguetrophylist extends ListenerAdapter {
@@ -59,7 +59,7 @@ public class leaguetrophylist extends ListenerAdapter {
 
 		try {
 			millis = Long.parseLong(time);
-		} catch (Exception ex) {
+		} catch (NumberFormatException ex) {
 			if (time.equals("create")) {
 				boolean b = false;
 				User userexecuted = new User(event.getUser().getId());
@@ -97,14 +97,13 @@ public class leaguetrophylist extends ListenerAdapter {
 			ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.of("Europe/Berlin"));
 			String formattedDate = formatter.format(dateTime);
 			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-					"Hier die Liste vom " + formattedDate + ".", MessageUtil.EmbedType.INFO)).addFile(file).queue();
-			return;
+					"Hier die Liste vom " + formattedDate + ".", MessageUtil.EmbedType.INFO))
+					.setFiles(FileUpload.fromData(file)).queue();
 		} else {
 			event.getHook()
 					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Zu dem angegebenen Timestamp wurde keine Liste gefunden!", MessageUtil.EmbedType.ERROR))
 					.queue();
-			return;
 		}
 
 		/*
@@ -367,17 +366,16 @@ public class leaguetrophylist extends ListenerAdapter {
 			status = "[Warteschlange]";
 		} else {
 			String role = "";
-			if (p.getRole() == Player.RoleType.ADMIN) {
-				role = "Admin";
-			} else if (p.getRole() == Player.RoleType.LEADER) {
-				role = "Anführer";
-			} else if (p.getRole() == Player.RoleType.COLEADER) {
-				role = "Vize-Anführer";
-			} else if (p.getRole() == Player.RoleType.ELDER) {
-				role = "Ältester";
-			} else if (p.getRole() == Player.RoleType.MEMBER) {
-				role = "Mitglied";
-			}
+			if (null != p.getRole())
+				switch (p.getRole()) {
+					case ADMIN -> role = "Admin";
+					case LEADER -> role = "Anführer";
+					case COLEADER -> role = "Vize-Anführer";
+					case ELDER -> role = "Ältester";
+					case MEMBER -> role = "Mitglied";
+					default -> {
+					}
+				}
 			status = "[" + role + " " + p.getClanDB().getNameDB() + "]";
 		}
 		String discordInfo = "Dc:";
@@ -387,17 +385,13 @@ public class leaguetrophylist extends ListenerAdapter {
 			try {
 				member = Bot.getJda().getGuildById(Bot.guild_id).retrieveMemberById(discordID).submit().get();
 			} catch (ExecutionException e) {
-				if (e.getCause() instanceof net.dv8tion.jda.api.exceptions.ErrorResponseException) {
-					net.dv8tion.jda.api.exceptions.ErrorResponseException ex = (net.dv8tion.jda.api.exceptions.ErrorResponseException) e
-							.getCause();
+				if (e.getCause() instanceof net.dv8tion.jda.api.exceptions.ErrorResponseException ex) {
 					if (ex.getErrorCode() != 10007 && ex.getErrorCode() != 10013) {
-						e.printStackTrace();
+						// Unexpected Discord lookup failure; ignore and continue without member info.
 					}
-				} else {
-					e.printStackTrace();
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				Thread.currentThread().interrupt();
 			} catch (Exception e) {
 				// Member nicht gefunden
 			}
@@ -433,35 +427,39 @@ public class leaguetrophylist extends ListenerAdapter {
 	}
 
 	public static ArrayList<Player> sortPlayers(ArrayList<Player> players) {
-		List<Player> sortedList = players.stream().sorted(new Comparator<Player>() {
+		List<Player> sortedList = players.stream().sorted((Player p1, Player p2) -> {
+			Integer leagueNumber1 = p1.getPoLLeagueNumber();
+			Integer leagueNumber2 = p2.getPoLLeagueNumber();
+			int league1 = leagueNumber1 != null ? leagueNumber1 : 0;
+			int league2 = leagueNumber2 != null ? leagueNumber2 : 0;
 
-			@Override
-			public int compare(Player p1, Player p2) {
-				int league1 = p1.getPoLLeagueNumber() != null ? p1.getPoLLeagueNumber() : 0;
-				int league2 = p2.getPoLLeagueNumber() != null ? p2.getPoLLeagueNumber() : 0;
-
-				// Primär: LeagueNumber absteigend
-				if (league1 != league2) {
-					return Integer.compare(league2, league1);
-				}
-
-				// In Liga 7: nur nach Medaillen sortieren
-				if (league1 == 7 && league2 == 7) {
-					int medals1 = p1.getPoLTrophies() != null ? p1.getPoLTrophies() : 0;
-					int medals2 = p2.getPoLTrophies() != null ? p2.getPoLTrophies() : 0;
-					return Integer.compare(medals2, medals1);
-				}
-
-				// Sonst: Trophäen (bei 10.000 STR-Trophäen)
-				int trophies1 = (p1.getTrophies() != null && p1.getTrophies() == 10000)
-						? (p1.getSTRTrophies() != null ? p1.getSTRTrophies() : 0)
-						: (p1.getTrophies() != null ? p1.getTrophies() : 0);
-				int trophies2 = (p2.getTrophies() != null && p2.getTrophies() == 10000)
-						? (p2.getSTRTrophies() != null ? p2.getSTRTrophies() : 0)
-						: (p2.getTrophies() != null ? p2.getTrophies() : 0);
-
-				return Integer.compare(trophies2, trophies1);
+			// Primär: LeagueNumber absteigend
+			if (league1 != league2) {
+				return Integer.compare(league2, league1);
 			}
+
+			// In Liga 7: nur nach Medaillen sortieren
+			if (league1 == 7 && league2 == 7) {
+				Integer poLTrophies1 = p1.getPoLTrophies();
+				Integer poLTrophies2 = p2.getPoLTrophies();
+				int medals1 = poLTrophies1 != null ? poLTrophies1 : 0;
+				int medals2 = poLTrophies2 != null ? poLTrophies2 : 0;
+				return Integer.compare(medals2, medals1);
+			}
+
+			// Sonst: Trophäen (bei 10.000 STR-Trophäen)
+			Integer strTrophies1 = p1.getSTRTrophies();
+			Integer strTrophies2 = p2.getSTRTrophies();
+			Integer trophies1Obj = p1.getTrophies();
+			Integer trophies2Obj = p2.getTrophies();
+			int trophies1 = (trophies1Obj != null && trophies1Obj == 10000)
+					? (strTrophies1 != null ? strTrophies1 : 0)
+					: (trophies1Obj != null ? trophies1Obj : 0);
+			int trophies2 = (trophies2Obj != null && trophies2Obj == 10000)
+					? (strTrophies2 != null ? strTrophies2 : 0)
+					: (trophies2Obj != null ? trophies2Obj : 0);
+
+			return Integer.compare(trophies2, trophies1);
 		}).collect(Collectors.toList());
 
 		return new ArrayList<>(sortedList);
@@ -504,25 +502,33 @@ public class leaguetrophylist extends ListenerAdapter {
 				}
 				String clantag = p.getClanDB().getTag();
 
-				if (p.getRole() == Player.RoleType.ADMIN) {
-					ArrayList<String> adminstrings = clantagtoadminstrings.getOrDefault(clantag, new ArrayList<>());
-					adminstrings.add(formatPlayerLine(p));
-					clantagtoadminstrings.put(clantag, adminstrings);
-					clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
-				} else if (p.getRole() == Player.RoleType.LEADER) {
-					ArrayList<String> leaderstrings = clantagtoleaderstrings.getOrDefault(clantag, new ArrayList<>());
-					leaderstrings.add(formatPlayerLine(p));
-					clantagtoleaderstrings.put(clantag, leaderstrings);
-					clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
-				} else if (p.getRole() == Player.RoleType.COLEADER) {
-					ArrayList<String> coleaderstrings = clantagtocoleaderstrings.getOrDefault(clantag,
-							new ArrayList<>());
-					coleaderstrings.add(formatPlayerLine(p));
-					clantagtocoleaderstrings.put(clantag, coleaderstrings);
-					clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
-				} else {
+				if (null == p.getRole()) {
 					playerstringssorted.add(formatPlayerLine(p));
-				}
+				} else
+					switch (p.getRole()) {
+						case ADMIN -> {
+							ArrayList<String> adminstrings = clantagtoadminstrings.getOrDefault(clantag,
+									new ArrayList<>());
+							adminstrings.add(formatPlayerLine(p));
+							clantagtoadminstrings.put(clantag, adminstrings);
+							clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
+						}
+						case LEADER -> {
+							ArrayList<String> leaderstrings = clantagtoleaderstrings.getOrDefault(clantag,
+									new ArrayList<>());
+							leaderstrings.add(formatPlayerLine(p));
+							clantagtoleaderstrings.put(clantag, leaderstrings);
+							clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
+						}
+						case COLEADER -> {
+							ArrayList<String> coleaderstrings = clantagtocoleaderstrings.getOrDefault(clantag,
+									new ArrayList<>());
+							coleaderstrings.add(formatPlayerLine(p));
+							clantagtocoleaderstrings.put(clantag, coleaderstrings);
+							clantagtomembercount.put(clantag, clantagtomembercount.getOrDefault(clantag, 0) + 1);
+						}
+						default -> playerstringssorted.add(formatPlayerLine(p));
+					}
 			}
 
 			int counter = 1;
@@ -569,7 +575,7 @@ public class leaguetrophylist extends ListenerAdapter {
 					fillup = playerstringssorted.size() - 1;
 				}
 
-				for (int j = 0; j < fillup && playerstringssorted.size() > 0; j++) {
+				for (int j = 0; j < fillup && !playerstringssorted.isEmpty(); j++) {
 					content += "#" + counter + " ";
 					counter++;
 					content += playerstringssorted.get(0);
@@ -596,9 +602,9 @@ public class leaguetrophylist extends ListenerAdapter {
 					fos.write(buffer, 0, length);
 				}
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				throw new RuntimeException("Failed to create or open output file: " + file.getAbsolutePath(), e);
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException("I/O error while writing list file: " + file.getAbsolutePath(), e);
 			}
 			System.out.println("Neue League-Trophy Liste gespeichert: " + file.getAbsolutePath());
 		});
@@ -619,8 +625,7 @@ public class leaguetrophylist extends ListenerAdapter {
 			}
 			return dir;
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			return null; // oder Fallback
+			throw new RuntimeException("Unable to determine running directory", e);
 		}
 	}
 }

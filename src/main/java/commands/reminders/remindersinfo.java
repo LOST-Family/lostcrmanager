@@ -88,9 +88,9 @@ public class remindersinfo extends ListenerAdapter {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
-		
+
 		// Sort reminders with Thursday 10:00 as the starting point
 		reminders.sort(new ReminderComparator());
 
@@ -170,16 +170,16 @@ public class remindersinfo extends ListenerAdapter {
 		 * Convert weekday string to index (0=Monday, 6=Sunday)
 		 */
 		private int getDayOfWeekIndex(String weekday) {
-			switch (weekday.toLowerCase()) {
-				case "monday": return 0;
-				case "tuesday": return 1;
-				case "wednesday": return 2;
-				case "thursday": return 3;
-				case "friday": return 4;
-				case "saturday": return 5;
-				case "sunday": return 6;
-				default: return 0;
-			}
+                    return switch (weekday.toLowerCase()) {
+                        case "monday" -> 0;
+                        case "tuesday" -> 1;
+                        case "wednesday" -> 2;
+                        case "thursday" -> 3;
+                        case "friday" -> 4;
+                        case "saturday" -> 5;
+                        case "sunday" -> 6;
+                        default -> 0;
+                    };
 		}
 	}
 

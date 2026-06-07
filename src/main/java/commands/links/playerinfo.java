@@ -1,6 +1,7 @@
 package commands.links;
 
 import java.io.ByteArrayInputStream;
+import net.dv8tion.jda.api.utils.FileUpload;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -263,7 +264,7 @@ import util.MessageUtil;
 					String sanitizedTag = playertag.replaceAll("[^a-zA-Z0-9_-]", "");
 					// Fallback to default name if sanitization results in empty string
 					String filename = (sanitizedTag.isEmpty() ? "player" : sanitizedTag) + "_info.txt";
-					event.getHook().editOriginal(inputStream, filename)
+					event.getHook().editOriginalAttachments(FileUpload.fromData(inputStream, filename))
 							.setEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO))
 							.setActionRow(bellButton)
 							.queue();

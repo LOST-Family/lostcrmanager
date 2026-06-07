@@ -55,7 +55,7 @@ public class kpclan extends ListenerAdapter {
 		}
 
 		new Thread(() -> {
-			String desc = "";
+			String desc;
 			ArrayList<Player> playerlist = new ArrayList<>();
 
 			if (clantag.equals("all")) {

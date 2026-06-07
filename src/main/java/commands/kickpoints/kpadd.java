@@ -26,7 +26,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import util.MessageUtil;
@@ -113,7 +113,7 @@ import util.MessageUtil;
 		TextInput playertagti = TextInput.create("tag", "Spieler-Tag", TextInputStyle.SHORT)
 				.setPlaceholder("z.B. #Y0RYLP0Q").setValue(playertag).setMinLength(1).build();
 
-		Modal modal = Modal.create("kpadd", "Kickpunkt hinzufügen").addActionRows(ActionRow.of(reasonti),
+		Modal modal = Modal.create("kpadd", "Kickpunkt hinzufügen").addComponents(ActionRow.of(reasonti),
 				ActionRow.of(kpamountti), ActionRow.of(dateti), ActionRow.of(playertagti)).build();
 
 		event.replyModal(modal).queue();

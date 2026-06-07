@@ -42,29 +42,12 @@ public class UserDTO {
 
         for (Player.RoleType role : rolestypes) {
             switch (role) {
-            case ADMIN:
-                highestRole = role.toString();
-                break;
-            case LEADER:
-                if (highest != Player.RoleType.ADMIN)
-                    highestRole = role.toString();
-                break;
-            case COLEADER:
-                if (highest != Player.RoleType.ADMIN || highest != Player.RoleType.LEADER)
-                    highestRole = role.toString();
-                break;
-            case ELDER:
-                if (highest != Player.RoleType.ADMIN || highest != Player.RoleType.LEADER
-                        || highest != Player.RoleType.COLEADER)
-                    highestRole = role.toString();
-                break;
-            case MEMBER:
-                if (highest != Player.RoleType.ADMIN || highest != Player.RoleType.LEADER
-                        || highest != Player.RoleType.COLEADER || highest != Player.RoleType.ELDER)
-                    highestRole = role.toString();
-                break;
-            default:
-                break;
+                case ADMIN -> highestRole = role.toString();
+                case LEADER -> { if (highest != Player.RoleType.ADMIN) highestRole = role.toString(); }
+                case COLEADER -> { if (highest != Player.RoleType.ADMIN || highest != Player.RoleType.LEADER) highestRole = role.toString(); }
+                case ELDER -> { if (highest != Player.RoleType.ADMIN || highest != Player.RoleType.LEADER || highest != Player.RoleType.COLEADER) highestRole = role.toString(); }
+                case MEMBER -> { if (highest != Player.RoleType.ADMIN || highest != Player.RoleType.LEADER || highest != Player.RoleType.COLEADER || highest != Player.RoleType.ELDER) highestRole = role.toString(); }
+                default -> {}
             }
         }
 

@@ -93,13 +93,12 @@ public class LinkWebServer {
 				System.out.println("[LinkAPI] ✓ Link endpoint: http://localhost:" + port + "/api/link");
 				System.out.println("========================================");
 
-			} catch (Exception e) {
+			} catch (IOException | RuntimeException e) {
 				System.err.println("========================================");
 				System.err.println("[LinkAPI] ✗ FAILED TO START SERVER!");
 				System.err.println("[LinkAPI] Error: " + e.getClass().getName());
 				System.err.println("[LinkAPI] Message: " + e.getMessage());
 				System.err.println("========================================");
-				e.printStackTrace();
 				server = null;
 
 				// Provide helpful diagnostic info
@@ -194,9 +193,8 @@ public class LinkWebServer {
 
 				sendJsonResponse(exchange, 200, response);
 
-			} catch (Exception e) {
+			} catch (IOException | RuntimeException e) {
 				System.err.println("[LinkAPI] Error handling health check: " + e.getMessage());
-				e.printStackTrace();
 
 				JSONObject error = new JSONObject();
 				error.put("success", false);
@@ -247,7 +245,7 @@ public class LinkWebServer {
 				JSONObject requestData;
 				try {
 					requestData = new JSONObject(body);
-				} catch (Exception e) {
+				} catch (org.json.JSONException e) {
 					JSONObject error = new JSONObject();
 					error.put("success", false);
 					error.put("error", "Invalid JSON in request body");
@@ -318,9 +316,8 @@ public class LinkWebServer {
 					String playerName = null;
 					try {
 						playerName = p.getNameAPI();
-					} catch (Exception e) {
+					} catch (RuntimeException e) {
 						System.err.println("[LinkAPI] Error getting player name: " + e.getMessage());
-						e.printStackTrace();
 					}
 
 					// Insert into database
@@ -363,9 +360,8 @@ public class LinkWebServer {
 
 					sendJsonResponse(exchange, 200, response);
 
-				} catch (Exception e) {
+				} catch (IOException | RuntimeException e) {
 					System.err.println("[LinkAPI] Failed to link " + finalTag + ": " + e.getMessage());
-					e.printStackTrace();
 					JSONObject error = new JSONObject();
 					error.put("success", false);
 					error.put("error", "Internal server error");
@@ -373,9 +369,8 @@ public class LinkWebServer {
 					sendJsonResponse(exchange, 500, error);
 				}
 
-			} catch (Exception e) {
+			} catch (IOException | RuntimeException e) {
 				System.err.println("[LinkAPI] Error handling link request: " + e.getMessage());
-				e.printStackTrace();
 				JSONObject error = new JSONObject();
 				error.put("success", false);
 				error.put("error", "Internal server error");
@@ -457,7 +452,6 @@ public class LinkWebServer {
 					}
 				} catch (java.sql.SQLException e) {
 					System.err.println("[LinkAPI] DB error in SearchLinkedHandler: " + e.getMessage());
-					e.printStackTrace();
 					JSONObject error = new JSONObject();
 					error.put("success", false);
 					error.put("error", "Database error");
@@ -470,9 +464,8 @@ public class LinkWebServer {
 				response.put("players", results);
 				sendJsonResponse(exchange, 200, response);
 
-			} catch (Exception e) {
+			} catch (IOException | RuntimeException e) {
 				System.err.println("[LinkAPI] Error in SearchLinkedHandler: " + e.getMessage());
-				e.printStackTrace();
 				JSONObject error = new JSONObject();
 				error.put("success", false);
 				error.put("error", "Internal server error");
@@ -519,7 +512,7 @@ public class LinkWebServer {
 				JSONObject requestData;
 				try {
 					requestData = new JSONObject(body);
-				} catch (Exception e) {
+				} catch (org.json.JSONException e) {
 					JSONObject error = new JSONObject();
 					error.put("success", false);
 					error.put("error", "Invalid JSON in request body");
@@ -570,9 +563,8 @@ public class LinkWebServer {
 				response.put("message", "Player successfully removed");
 				sendJsonResponse(exchange, 200, response);
 
-			} catch (Exception e) {
+			} catch (IOException | RuntimeException e) {
 				System.err.println("[LinkAPI] Error in RemovePlayerHandler: " + e.getMessage());
-				e.printStackTrace();
 				JSONObject error = new JSONObject();
 				error.put("success", false);
 				error.put("error", "Internal server error");

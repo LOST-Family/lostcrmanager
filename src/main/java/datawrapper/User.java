@@ -15,7 +15,7 @@ public class User {
 	}
 
 	private HashMap<String, Player.RoleType> clanroles;
-	private String userid;
+	private final String userid;
 	private ArrayList<Player> linkedaccounts;
 	private Boolean isadmin;
 	private String nickname;
@@ -55,7 +55,7 @@ public class User {
 				nickname = Bot.getJda().getGuildById(Bot.guild_id).retrieveMemberById(userid).submit().get()
 						.getEffectiveName();
 			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 		}
 		return nickname;

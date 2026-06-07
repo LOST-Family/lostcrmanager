@@ -33,7 +33,7 @@ public class restart extends ListenerAdapter {
 		try {
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.exit(0);
