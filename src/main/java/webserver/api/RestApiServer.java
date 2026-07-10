@@ -3,14 +3,22 @@ package webserver.api;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
@@ -34,7 +42,13 @@ import webserver.api.dto.UserDTO;
  */
 public class RestApiServer {
 
+	private static final int WATCHDOG_INTERVAL_SECONDS = 60;
+	private static final int WATCHDOG_MAX_FAILURES = 3;
+
 	private HttpServer server;
+	private ExecutorService executor;
+	private ScheduledExecutorService watchdog;
+	private int watchdogFailures = 0;
 	private final int port;
 	private final ObjectMapper objectMapper;
 	private final String apiToken;
@@ -51,6 +65,11 @@ public class RestApiServer {
 	}
 
 	public void start() throws IOException {
+		startServer();
+		startWatchdog();
+	}
+
+	private synchronized void startServer() throws IOException {
 		server = HttpServer.create(new InetSocketAddress(port), 0);
 
 		// Register API endpoints
@@ -61,17 +80,105 @@ public class RestApiServer {
 		server.createContext("/api/players/", new PlayerHandler());
 		server.createContext("/api/users/", new UserHandler());
 		server.createContext("/api/coleaders", new ColeadersHandler());
+		server.createContext("/api/health", new HealthHandler());
 
-		server.setExecutor(Executors.newFixedThreadPool(10));
+		executor = Executors.newFixedThreadPool(10);
+		server.setExecutor(executor);
 		server.start();
 
 		System.out.println("REST API Server started on port " + port);
 	}
 
 	public void stop() {
+		if (watchdog != null) {
+			watchdog.shutdownNow();
+			watchdog = null;
+		}
+		stopServer();
+	}
+
+	private synchronized void stopServer() {
 		if (server != null) {
 			server.stop(0);
+			server = null;
 			System.out.println("REST API Server stopped");
+		}
+		if (executor != null) {
+			// Auch festhängende Worker-Threads beenden, damit ein Neustart
+			// mit einem frischen Thread-Pool startet
+			executor.shutdownNow();
+			executor = null;
+		}
+	}
+
+	/**
+	 * Prüft jede Minute per HTTP-Selbsttest, ob die API noch antwortet.
+	 * Nach mehreren Fehlschlägen in Folge (z.B. alle Worker-Threads blockiert)
+	 * wird der HTTP-Server automatisch neu gestartet.
+	 */
+	private void startWatchdog() {
+		if (watchdog != null) {
+			return;
+		}
+		watchdog = Executors.newSingleThreadScheduledExecutor(r -> {
+			Thread t = new Thread(r, "RestApiWatchdog");
+			t.setDaemon(true);
+			return t;
+		});
+		watchdog.scheduleAtFixedRate(this::checkHealth, WATCHDOG_INTERVAL_SECONDS, WATCHDOG_INTERVAL_SECONDS,
+				TimeUnit.SECONDS);
+		System.out.println("REST API Watchdog gestartet (Prüfung alle " + WATCHDOG_INTERVAL_SECONDS + "s)");
+	}
+
+	private void checkHealth() {
+		boolean healthy = false;
+		try {
+			HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create("http://127.0.0.1:" + port + "/api/health"))
+					.timeout(Duration.ofSeconds(10))
+					.GET().build();
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			healthy = response.statusCode() == 200;
+		} catch (final Exception e) {
+			// Timeout oder Verbindungsfehler -> ungesund
+		}
+
+		if (healthy) {
+			watchdogFailures = 0;
+			return;
+		}
+
+		watchdogFailures++;
+		System.err.println("REST API Health-Check fehlgeschlagen (" + watchdogFailures + "/" + WATCHDOG_MAX_FAILURES
+				+ ") auf Port " + port);
+
+		if (watchdogFailures >= WATCHDOG_MAX_FAILURES) {
+			watchdogFailures = 0;
+			System.err.println("REST API antwortet nicht mehr - starte HTTP-Server automatisch neu...");
+			try {
+				stopServer();
+				startServer();
+				System.err.println("REST API Server erfolgreich neu gestartet auf Port " + port);
+			} catch (final Exception e) {
+				System.err.println("Automatischer Neustart der REST API fehlgeschlagen: " + e.getMessage()
+						+ " - nächster Versuch beim nächsten fehlgeschlagenen Health-Check.");
+			}
+		}
+	}
+
+	/**
+	 * Handler for GET /api/health - no auth, used by the watchdog and external
+	 * monitoring (e.g. the linking bot) to check if the API is responsive.
+	 */
+	private class HealthHandler implements HttpHandler {
+		@Override
+		public void handle(HttpExchange exchange) throws IOException {
+			if (!"GET".equals(exchange.getRequestMethod())) {
+				sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+				return;
+			}
+			sendJsonResponse(exchange, 200, "{\"status\":\"ok\"}");
 		}
 	}
 
@@ -120,7 +227,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(playerDTO);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (IOException e) {
+			} catch (Exception e) {
 				handleException(exchange, "PlayerHandler", e);
 			}
 		}
@@ -171,7 +278,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(userDTO);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (IOException e) {
+			} catch (Exception e) {
 				handleException(exchange, "UserHandler", e);
 			}
 		}
@@ -378,7 +485,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(clans);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (IOException e) {
+			} catch (Exception e) {
 				handleException(exchange, "ClansHandler", e);
 			}
 		}
@@ -478,7 +585,7 @@ public class RestApiServer {
 				String json = objectMapper.writeValueAsString(resultList);
 				sendJsonResponse(exchange, 200, json);
 
-			} catch (IOException e) {
+			} catch (Exception e) {
 				handleException(exchange, "ColeadersHandler", e);
 			}
 		}

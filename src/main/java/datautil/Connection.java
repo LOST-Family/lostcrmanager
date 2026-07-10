@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import lostcrmanager.Bot;
 
@@ -23,17 +24,29 @@ public class Connection {
 		user = Bot.user;
 		password = Bot.password;
 
-		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
-			if (conn != null) {
-				connection = conn;
-				return true;
-			} else {
-				return false;
-			}
+		try (java.sql.Connection conn = openConnection()) {
+			return conn != null;
 		} catch (final SQLException e) {
 			System.out.println("Verbindungsfehler: " + e.getMessage());
 			return false;
 		}
+	}
+
+	/**
+	 * Öffnet eine neue DB-Verbindung mit Timeouts, damit ein stiller
+	 * Verbindungsabbruch (z.B. durch Netzwerk/DB-Neustart) Threads nicht
+	 * unbegrenzt blockieren kann.
+	 */
+	private static java.sql.Connection openConnection() throws SQLException {
+		Properties props = new Properties();
+		props.setProperty("user", user);
+		props.setProperty("password", password);
+		// Sekunden: bricht hängende Socket-Reads ab statt ewig zu blockieren
+		props.setProperty("socketTimeout", "30");
+		props.setProperty("connectTimeout", "10");
+		props.setProperty("loginTimeout", "10");
+		props.setProperty("tcpKeepAlive", "true");
+		return DriverManager.getConnection(url, props);
 	}
 
 	public static void tablesExists() {
@@ -47,7 +60,7 @@ public class Connection {
 		tableNames.add("kickpoints");
 		tableNames.add("reminders");
 		tableNames.add("player_wins");
-		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
+		try (java.sql.Connection conn = openConnection()) {
 			DatabaseMetaData dbm = conn.getMetaData();
 
 			for (final String tableName : tableNames) {
@@ -111,7 +124,7 @@ public class Connection {
 
 	public static void migrateRemindersTable() {
 		// Add last_sent_date column to reminders table if it doesn't exist
-		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
+		try (java.sql.Connection conn = openConnection()) {
 			DatabaseMetaData dbm = conn.getMetaData();
 			try (ResultSet columns = dbm.getColumns(null, null, "reminders", "last_sent_date")) {
 				if (!columns.next()) {
@@ -149,7 +162,7 @@ public class Connection {
 
 	public static void migrateClanMembersTable() {
 		// Add note column to clan_members table if it doesn't exist
-		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
+		try (java.sql.Connection conn = openConnection()) {
 			DatabaseMetaData dbm = conn.getMetaData();
 			try (ResultSet columns = dbm.getColumns(null, null, "clan_members", "note")) {
 				if (!columns.next()) {
@@ -172,7 +185,7 @@ public class Connection {
 
 	public static void migrateKickpointReasonsTable() {
 		// Add index column to kickpoint_reasons table if it doesn't exist
-		try (java.sql.Connection conn = DriverManager.getConnection(url, user, password)) {
+		try (java.sql.Connection conn = openConnection()) {
 			DatabaseMetaData dbm = conn.getMetaData();
 			try (ResultSet columns = dbm.getColumns(null, null, "kickpoint_reasons", "index")) {
 				if (!columns.next()) {
@@ -193,11 +206,30 @@ public class Connection {
 		}
 	}
 
-	public static java.sql.Connection getConnection() throws SQLException {
-		if (connection == null || connection.isClosed()) {
-			connection = DriverManager.getConnection(url, user, password);
+	public static synchronized java.sql.Connection getConnection() throws SQLException {
+		if (connection == null || connection.isClosed() || !isConnectionValid()) {
+			closeQuietly(connection);
+			connection = openConnection();
 		}
 		return connection;
+	}
+
+	private static boolean isConnectionValid() {
+		try {
+			return connection.isValid(5);
+		} catch (final SQLException e) {
+			return false;
+		}
+	}
+
+	private static void closeQuietly(java.sql.Connection conn) {
+		if (conn != null) {
+			try {
+				conn.close();
+			} catch (final SQLException e) {
+				// Verbindung ist ohnehin defekt
+			}
+		}
 	}
 
 }

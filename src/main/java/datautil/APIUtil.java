@@ -7,11 +7,19 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 
 import lostcrmanager.Bot;
 
 public class APIUtil {
+
+	// Gemeinsamer Client mit Timeouts, damit hängende CR-API-Aufrufe keine
+	// Threads (z.B. die REST-API-Worker) dauerhaft blockieren können
+	private static final HttpClient CLIENT = HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(10))
+			.build();
+	private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
 
 	public static ApiResponse raw(String method, String path, Map<String, String> query, String jsonBody) {
 		StringBuilder urlBuilder = new StringBuilder("https://api.clashroyale.com/v1");
@@ -28,9 +36,9 @@ public class APIUtil {
 			}
 		}
 
-		HttpClient client = HttpClient.newHttpClient();
 		HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
 			.uri(URI.create(urlBuilder.toString()))
+			.timeout(REQUEST_TIMEOUT)
 			.header("Authorization", "Bearer " + Bot.api_key)
 			.header("Accept", "application/json");
 
@@ -42,7 +50,7 @@ public class APIUtil {
 		}
 
 		try {
-			HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+			HttpResponse<String> response = CLIENT.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
 			return new ApiResponse(response.statusCode(), response.body());
 		} catch (IOException | InterruptedException e) {
 			System.err.println(e.getMessage());
@@ -57,14 +65,12 @@ public class APIUtil {
 
 		String url = "https://api.clashroyale.com/v1/clans/" + encodedTag;
 
-		HttpClient client = HttpClient.newHttpClient();
-
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(REQUEST_TIMEOUT)
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
 
 		HttpResponse<String> response;
 		try {
-			response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (IOException | InterruptedException e) {
 			System.err.println(e.getMessage());
 			return null;
@@ -87,14 +93,12 @@ public class APIUtil {
 
 		String url = "https://api.clashroyale.com/v1/players/" + encodedTag;
 
-		HttpClient client = HttpClient.newHttpClient();
-
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(REQUEST_TIMEOUT)
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
 
 		HttpResponse<String> response;
 		try {
-			response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (IOException | InterruptedException e) {
 			System.err.println(e.getMessage());
 			return null;
@@ -117,14 +121,12 @@ public class APIUtil {
 
 		String url = "https://api.clashroyale.com/v1/clans/" + encodedTag + "/currentriverrace";
 
-		HttpClient client = HttpClient.newHttpClient();
-
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(REQUEST_TIMEOUT)
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
 
 		HttpResponse<String> response;
 		try {
-			response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (IOException | InterruptedException e) {
 			System.err.println(e.getMessage());
 			return null;

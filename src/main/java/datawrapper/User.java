@@ -48,6 +48,31 @@ public class User {
 		return isadmin;
 	}
 
+	/**
+	 * Prüft, ob der User im Guild-Server eine bestimmte Discord-Rolle hat.
+	 */
+	@SuppressWarnings("null")
+	public boolean hasDiscordRole(String roleId) {
+		try {
+			net.dv8tion.jda.api.entities.Guild guild = Bot.getJda().getGuildById(Bot.guild_id);
+			if (guild == null) {
+				return false;
+			}
+			net.dv8tion.jda.api.entities.Member member = guild.getMemberById(userid);
+			if (member == null) {
+				member = guild.retrieveMemberById(userid).submit().get();
+			}
+			for (net.dv8tion.jda.api.entities.Role role : member.getRoles()) {
+				if (role.getId().equals(roleId)) {
+					return true;
+				}
+			}
+			return false;
+		} catch (final Exception e) {
+			return false;
+		}
+	}
+
 	@SuppressWarnings("null")
 	public String getNickname() {
 		if (nickname == null) {

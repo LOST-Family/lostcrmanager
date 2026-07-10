@@ -904,7 +904,7 @@ Copies all kickpoint reason presets from one source clan to every other register
 
 Initiates a bot restart after a 3-second delay (`System.exit(0)`).
 
-**Required permission**: Admin only.
+**Required permission**: Admin, or member of the restart role (`Bot.RESTART_ROLE_ID`).
 
 **Request body**:
 ```json
@@ -918,6 +918,21 @@ Initiates a bot restart after a 3-second delay (`System.exit(0)`).
 {
   "success": true,
   "message": "Bot restart initiated"
+}
+```
+
+---
+
+### GET /api/health
+
+Health check endpoint. **No authentication required.** Used by the built-in
+watchdog (which auto-restarts the HTTP server after 3 consecutive failed
+checks) and available for external monitoring, e.g. by the linking bot.
+
+**Response** `200 OK`:
+```json
+{
+  "status": "ok"
 }
 ```
 

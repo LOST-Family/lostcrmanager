@@ -3,6 +3,7 @@ package commands.admin;
 import javax.annotation.Nonnull;
 
 import datawrapper.User;
+import lostcrmanager.Bot;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import util.MessageUtil;
@@ -17,10 +18,11 @@ public class restart extends ListenerAdapter {
 		String title = "Restart";
 
 		User userexecuted = new User(event.getUser().getId());
-		if (!userexecuted.isAdmin()) {
+		if (!userexecuted.isAdmin() && !userexecuted.hasDiscordRole(Bot.RESTART_ROLE_ID)) {
 			event.getHook()
 					.editOriginalEmbeds(MessageUtil.buildEmbed(title,
-							"Du musst Admin sein, um diesen Befehl ausführen zu können.", MessageUtil.EmbedType.ERROR))
+							"Du musst Admin sein oder die Restart-Rolle haben, um diesen Befehl ausführen zu können.",
+							MessageUtil.EmbedType.ERROR))
 					.queue();
 			return;
 		}

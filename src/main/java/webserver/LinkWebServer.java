@@ -15,18 +15,38 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class LinkWebServer {
 
+	private static final int WATCHDOG_INTERVAL_SECONDS = 60;
+	private static final int WATCHDOG_MAX_FAILURES = 3;
+
 	private static volatile HttpServer server;
+	private static ExecutorService executor;
+	private static ScheduledExecutorService watchdog;
+	private static int watchdogFailures = 0;
 	private static String apiSecret;
 	private static int port;
 	private static final Object lock = new Object();
 
 	public static void start() {
+		startServer();
+		startWatchdog();
+	}
+
+	private static void startServer() {
 		synchronized (lock) {
 			if (server != null) {
 				System.out.println("[LinkAPI] REST API server already running");
@@ -63,8 +83,11 @@ public class LinkWebServer {
 				System.out.println("[LinkAPI] Creating HttpServer instance...");
 				server = HttpServer.create(new InetSocketAddress(port), 0);
 
-				// Use default executor (creates a thread pool)
-				server.setExecutor(null);
+				// Eigener Thread-Pool: mit dem Default-Executor (null) laufen alle
+				// Requests auf einem einzigen Thread - ein hängender Request
+				// blockiert dann den kompletten Server
+				executor = Executors.newFixedThreadPool(10);
+				server.setExecutor(executor);
 
 				System.out.println("[LinkAPI] Registering endpoints...");
 
@@ -112,6 +135,14 @@ public class LinkWebServer {
 	}
 
 	public static void stop() {
+		if (watchdog != null) {
+			watchdog.shutdownNow();
+			watchdog = null;
+		}
+		stopServer();
+	}
+
+	private static void stopServer() {
 		synchronized (lock) {
 			if (server != null) {
 				System.out.println("[LinkAPI] Stopping REST API server...");
@@ -119,6 +150,68 @@ public class LinkWebServer {
 				server.stop(2);
 				server = null;
 				System.out.println("[LinkAPI] REST API server stopped");
+			}
+			if (executor != null) {
+				// Auch festhängende Worker-Threads beenden, damit ein Neustart
+				// mit einem frischen Thread-Pool startet
+				executor.shutdownNow();
+				executor = null;
+			}
+		}
+	}
+
+	/**
+	 * Prüft jede Minute per HTTP-Selbsttest, ob die Link-API noch antwortet.
+	 * Nach mehreren Fehlschlägen in Folge wird der Server automatisch neu
+	 * gestartet.
+	 */
+	private static void startWatchdog() {
+		if (watchdog != null) {
+			return;
+		}
+		watchdog = Executors.newSingleThreadScheduledExecutor(r -> {
+			Thread t = new Thread(r, "LinkApiWatchdog");
+			t.setDaemon(true);
+			return t;
+		});
+		watchdog.scheduleAtFixedRate(LinkWebServer::checkHealth, WATCHDOG_INTERVAL_SECONDS,
+				WATCHDOG_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		System.out.println("[LinkAPI] Watchdog gestartet (Prüfung alle " + WATCHDOG_INTERVAL_SECONDS + "s)");
+	}
+
+	private static void checkHealth() {
+		boolean healthy = false;
+		try {
+			HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create("http://127.0.0.1:" + port + "/api/health"))
+					.timeout(Duration.ofSeconds(10))
+					.GET().build();
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			healthy = response.statusCode() == 200;
+		} catch (final Exception e) {
+			// Timeout oder Verbindungsfehler -> ungesund
+		}
+
+		if (healthy) {
+			watchdogFailures = 0;
+			return;
+		}
+
+		watchdogFailures++;
+		System.err.println("[LinkAPI] Health-Check fehlgeschlagen (" + watchdogFailures + "/"
+				+ WATCHDOG_MAX_FAILURES + ") auf Port " + port);
+
+		if (watchdogFailures >= WATCHDOG_MAX_FAILURES) {
+			watchdogFailures = 0;
+			System.err.println("[LinkAPI] Link-API antwortet nicht mehr - starte Server automatisch neu...");
+			try {
+				stopServer();
+				startServer();
+				System.err.println("[LinkAPI] Server erfolgreich neu gestartet auf Port " + port);
+			} catch (final Exception e) {
+				System.err.println("[LinkAPI] Automatischer Neustart fehlgeschlagen: " + e.getMessage()
+						+ " - nächster Versuch beim nächsten fehlgeschlagenen Health-Check.");
 			}
 		}
 	}
@@ -174,7 +267,7 @@ public class LinkWebServer {
 	private static class HealthCheckHandler implements HttpHandler {
 		@Override
 		public void handle(HttpExchange exchange) throws IOException {
-			System.out.println("[LinkAPI] Health check request from " + exchange.getRemoteAddress());
+			// Kein Logging hier - der Watchdog ruft diesen Endpoint jede Minute auf
 
 			try {
 				// Check method

@@ -97,7 +97,7 @@ public class ManagementApiHandler implements HttpHandler {
 
 		} catch (org.json.JSONException e) {
 			sendResponse(exchange, 400, new JSONObject().put("error", "Invalid JSON body").toString());
-		} catch (IOException e) {
+		} catch (Exception e) {
 			handleException(exchange, e);
 		}
 	}
@@ -934,8 +934,8 @@ public class ManagementApiHandler implements HttpHandler {
 		}
 
 		User user = new User(discordUserId);
-		if (!user.isAdmin()) {
-			return error("Insufficient permissions - must be admin", 403);
+		if (!user.isAdmin() && !user.hasDiscordRole(Bot.RESTART_ROLE_ID)) {
+			return error("Insufficient permissions - must be admin or have the restart role", 403);
 		}
 
 		new Thread(() -> {
