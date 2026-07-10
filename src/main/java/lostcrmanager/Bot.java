@@ -90,7 +90,7 @@ public class Bot extends ListenerAdapter {
 	private final static ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private static final int MIN_LEVEL_FOR_PING = 45;
 	// Mitglieder mit dieser Rolle dürfen den Bot neustarten (zusätzlich zu Admins)
-	public static final String RESTART_ROLE_ID = "1524883066198425650";
+	public static final String RESTART_ROLE_ID = "1404788307174490232";
 
 	private static JDA jda;
 	private static RestApiServer restApiServer;
