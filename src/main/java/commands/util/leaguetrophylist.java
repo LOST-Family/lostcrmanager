@@ -38,6 +38,22 @@ import util.MessageUtil;
 
 public class leaguetrophylist extends ListenerAdapter {
 
+	// Clans, die bewusst nicht in der League-Trophy Liste auftauchen sollen.
+	private static final String[] EXCLUDED_CLANTAGS = { "#GJUCUUCU" };
+
+	private static boolean isExcludedClan(String clantag) {
+		if (clantag == null) {
+			return false;
+		}
+		String normalized = clantag.startsWith("#") ? clantag.substring(1) : clantag;
+		for (String excluded : EXCLUDED_CLANTAGS) {
+			if (normalized.equalsIgnoreCase(excluded.substring(1))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent event) {
 		if (!event.getName().equals("leaguetrophylist"))
@@ -467,7 +483,8 @@ public class leaguetrophylist extends ListenerAdapter {
 
 	public static void saveNewList() {
 
-		final ArrayList<String> clans = DBManager.getAllClans();
+		final ArrayList<String> clans = DBManager.getAllClans().stream().filter(tag -> !isExcludedClan(tag))
+				.collect(Collectors.toCollection(ArrayList::new));
 
 		Thread thread = new Thread(() -> {
 			ArrayList<Player> allplayers = new ArrayList<>();
