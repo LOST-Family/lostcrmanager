@@ -117,17 +117,20 @@ public class Clan {
 
 	public ArrayList<Player> getPlayersAPI() {
 		if (playerlistapi == null) {
-			playerlistapi = new ArrayList<>();
-			JSONObject jsonObject = new JSONObject(APIUtil.getClanJson(clan_tag));
+			// Erst in eine lokale Liste laden und das Feld nur bei Erfolg setzen,
+			// damit ein fehlgeschlagener API-Aufruf keine leere Liste cacht
+			ArrayList<Player> result = new ArrayList<>();
+			JSONObject jsonObject = APIUtil.getClanJsonObject(clan_tag);
 
 			JSONArray members = jsonObject.getJSONArray("memberList");
 
 			for (int i = 0; i < members.length(); i++) {
 				JSONObject member = members.getJSONObject(i);
 				if (member.has("tag") && member.has("name")) {
-					playerlistapi.add(new Player(member.getString("tag")).setNameAPI(member.getString("name")));
+					result.add(new Player(member.getString("tag")).setNameAPI(member.getString("name")));
 				}
 			}
+			playerlistapi = result;
 		}
 		return playerlistapi;
 	}
@@ -189,7 +192,7 @@ public class Clan {
 
 	public String getNameAPI() {
 		if (nameapi == null) {
-			JSONObject jsonObject = new JSONObject(APIUtil.getClanJson(clan_tag));
+			JSONObject jsonObject = APIUtil.getClanJsonObject(clan_tag);
 			nameapi = jsonObject.getString("name");
 		}
 		return nameapi;
@@ -272,7 +275,7 @@ public class Clan {
 
 	public String getDescriptionAPI() {
 		if (descriptionapi == null) {
-			JSONObject jsonobject = new JSONObject(APIUtil.getClanJson(clan_tag));
+			JSONObject jsonobject = APIUtil.getClanJsonObject(clan_tag);
 			if (jsonobject.has("description") && !jsonobject.isNull("description")) {
 				descriptionapi = jsonobject.getString("description");
 			}

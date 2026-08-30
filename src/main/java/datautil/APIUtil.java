@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import lostcrmanager.Bot;
 
 public class APIUtil {
@@ -58,6 +60,32 @@ public class APIUtil {
 		}
 	}
 
+
+	/**
+	 * Liefert die Clan-Daten als JSONObject. Anders als {@link #getClanJson(String)}
+	 * wird bei einem fehlgeschlagenen API-Aufruf eine ApiUnavailableException
+	 * geworfen statt null zurueckgegeben.
+	 */
+	public static JSONObject getClanJsonObject(String clanTag) {
+		return toJsonObject(getClanJson(clanTag), "Clan", clanTag);
+	}
+
+	/**
+	 * Liefert die Spieler-Daten als JSONObject. Anders als
+	 * {@link #getPlayerJson(String)} wird bei einem fehlgeschlagenen API-Aufruf
+	 * eine ApiUnavailableException geworfen statt null zurueckgegeben.
+	 */
+	public static JSONObject getPlayerJsonObject(String playerTag) {
+		return toJsonObject(getPlayerJson(playerTag), "Spieler", playerTag);
+	}
+
+	private static JSONObject toJsonObject(String json, String type, String tag) {
+		if (json == null) {
+			throw new ApiUnavailableException(
+					type + "-Daten fuer " + tag + " konnten nicht von der Clash-Royale-API abgerufen werden.");
+		}
+		return new JSONObject(json);
+	}
 
 	public static String getClanJson(String clanTag) {
 		// URL-kodieren des Spieler-Tags (# -> %23)

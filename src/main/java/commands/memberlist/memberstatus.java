@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import datautil.ApiUnavailableException;
 import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Player;
@@ -16,6 +17,7 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -74,73 +76,7 @@ public class memberstatus extends ListenerAdapter {
 		}
 
 		final boolean excludeLeadersFinal = excludeLeaders;
-		new Thread(() -> {
-			ArrayList<Player> playerlistdb = c.getPlayersDB();
-
-			ArrayList<String> taglistdb = new ArrayList<>();
-			playerlistdb.forEach(p -> taglistdb.add(p.getTag()));
-
-			ArrayList<Player> playerlistapi = c.getPlayersAPI();
-
-			ArrayList<String> taglistapi = new ArrayList<>();
-			playerlistapi.forEach(p -> taglistapi.add(p.getTag()));
-
-			ArrayList<Player> membernotinclan = new ArrayList<>();
-			ArrayList<Player> inclannotmember = new ArrayList<>();
-
-			for (String s : taglistdb) {
-				if (!taglistapi.contains(s)) {
-					Player p = new Player(s);
-					// Skip hidden coleaders - they don't need to be in the clan ingame
-					if (p.isHiddenColeader()) {
-						continue;
-					}
-					// Skip leaders/coleaders/admins if exclude_leaders is true
-					if (excludeLeadersFinal) {
-						Player.RoleType role = p.getRole();
-						if (role == Player.RoleType.ADMIN || role == Player.RoleType.LEADER
-								|| role == Player.RoleType.COLEADER) {
-							continue;
-						}
-					}
-					membernotinclan.add(p);
-				}
-			}
-
-			for (String s : taglistapi) {
-				if (!taglistdb.contains(s)) {
-					inclannotmember.add(new Player(s));
-				}
-			}
-
-			String membernotinclanstr = "";
-
-			for (Player p : membernotinclan) {
-				membernotinclanstr += p.getInfoStringDB() + "\n";
-			}
-
-			String inclannotmemberstr = "";
-
-			for (Player p : inclannotmember) {
-				inclannotmemberstr += p.getInfoStringAPI() + "\n";
-			}
-
-			String desc = "## " + c.getInfoStringDB() + "\n";
-
-			desc += "**Mitglied, ingame nicht im Clan:**\n\n";
-			desc += "".equals(membernotinclanstr) ? "---\n\n" : MessageUtil.unformat(membernotinclanstr) + "\n";
-			desc += "**Kein Mitglied, ingame im Clan:**\n\n";
-			desc += "".equals(inclannotmemberstr) ? "---\n\n" : MessageUtil.unformat(inclannotmemberstr) + "\n";
-
-			Button refreshButton = Button.secondary("memberstatus_" + clantag + "_" + excludeLeadersFinal, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
-
-			ZonedDateTime jetzt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
-			String formatiert = jetzt.format(formatter);
-
-			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
-					"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
-		}).start();
+		new Thread(() -> sendMemberStatus(event.getHook(), c, clantag, excludeLeadersFinal, title)).start();
 
 	}
 
@@ -211,7 +147,17 @@ public class memberstatus extends ListenerAdapter {
 		}
 
 		final boolean excludeLeadersFinal = excludeLeaders;
-		new Thread(() -> {
+		new Thread(() -> sendMemberStatus(event.getHook(), c, clantag, excludeLeadersFinal, title)).start();
+	}
+
+	/**
+	 * Baut den Memberstatus und schickt ihn an den Interaction-Hook. Alle Fehler
+	 * werden abgefangen (z.B. wenn die Clash-Royale-API nicht erreichbar ist),
+	 * damit der Thread nicht still stirbt und die Interaktion ewig auf
+	 * "denkt nach..." haengen bleibt.
+	 */
+	private void sendMemberStatus(InteractionHook hook, Clan c, String clantag, boolean excludeLeaders, String title) {
+		try {
 			ArrayList<Player> playerlistdb = c.getPlayersDB();
 
 			ArrayList<String> taglistdb = new ArrayList<>();
@@ -233,7 +179,7 @@ public class memberstatus extends ListenerAdapter {
 						continue;
 					}
 					// Skip leaders/coleaders/admins if exclude_leaders is true
-					if (excludeLeadersFinal) {
+					if (excludeLeaders) {
 						Player.RoleType role = p.getRole();
 						if (role == Player.RoleType.ADMIN || role == Player.RoleType.LEADER
 								|| role == Player.RoleType.COLEADER) {
@@ -269,15 +215,24 @@ public class memberstatus extends ListenerAdapter {
 			desc += "**Kein Mitglied, ingame im Clan:**\n\n";
 			desc += "".equals(inclannotmemberstr) ? "---\n\n" : MessageUtil.unformat(inclannotmemberstr) + "\n";
 
-			Button refreshButton = Button.secondary("memberstatus_" + clantag + "_" + excludeLeadersFinal, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
+			Button refreshButton = Button.secondary("memberstatus_" + clantag + "_" + excludeLeaders, "\u200B").withEmoji(Emoji.fromUnicode("🔁"));
 
 			ZonedDateTime jetzt = ZonedDateTime.now(ZoneId.of("Europe/Berlin"));
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
 			String formatiert = jetzt.format(formatter);
 
-			event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
+			hook.editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.INFO,
 					"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
-		}).start();
+		} catch (ApiUnavailableException e) {
+			System.err.println(e.getMessage());
+			hook.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+					"Die Clash-Royale-API ist derzeit nicht erreichbar. Bitte versuche es sp\u00e4ter erneut.",
+					MessageUtil.EmbedType.ERROR)).setComponents().queue();
+		} catch (Exception e) {
+			System.err.println("Fehler beim Erstellen des Memberstatus f\u00fcr " + clantag + ": " + e);
+			hook.editOriginalEmbeds(MessageUtil.buildEmbed(title, "Der Memberstatus konnte nicht erstellt werden.",
+					MessageUtil.EmbedType.ERROR)).setComponents().queue();
+		}
 	}
 
 }

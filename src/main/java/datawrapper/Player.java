@@ -220,7 +220,7 @@ public class Player {
 
 	public String getNameAPI() {
 		if (nameapi == null) {
-			JSONObject jsonObject = new JSONObject(APIUtil.getPlayerJson(tag));
+			JSONObject jsonObject = APIUtil.getPlayerJsonObject(tag);
 			return jsonObject.getString("name");
 		}
 		return nameapi;
@@ -245,7 +245,7 @@ public class Player {
 
 	public Clan getClanAPI() {
 		if (clanapi == null) {
-			JSONObject jsonObject = new JSONObject(APIUtil.getPlayerJson(tag));
+			JSONObject jsonObject = APIUtil.getPlayerJsonObject(tag);
 
 			// Prüfen, ob der Schlüssel "clan" vorhanden ist und nicht null
 			if (jsonObject.has("clan") && !jsonObject.isNull("clan")) {
@@ -324,7 +324,7 @@ public class Player {
 	public Integer getTrophies() {
 		if (trophies == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			trophies = apiresult.getInt("trophies");
 		}
@@ -334,7 +334,7 @@ public class Player {
 	public Integer getSTRTrophies() {
 		if (strtrophies == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			String currentseasonstring = Bot.seasonstringfallback;
 			if (apiresult.has("leagueStatistics")) {
@@ -380,7 +380,7 @@ public class Player {
 	public Integer getPoLLeagueNumber() {
 		if (PathofLegendLeagueNumber == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			if (apiresult.has("currentPathOfLegendSeasonResult")
 					&& !apiresult.isNull("currentPathOfLegendSeasonResult")) {
@@ -394,7 +394,7 @@ public class Player {
 	public Integer getPoLTrophies() {
 		if (PathofLegendTrophies == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			if (apiresult.has("currentPathOfLegendSeasonResult")
 					&& !apiresult.isNull("currentPathOfLegendSeasonResult")) {
@@ -408,7 +408,7 @@ public class Player {
 	public Integer getLastPathOfLegendLeagueNumber() {
 		if (lastPathOfLegendLeagueNumber == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			if (apiresult.has("lastPathOfLegendSeasonResult")
 					&& !apiresult.isNull("lastPathOfLegendSeasonResult")) {
@@ -422,7 +422,7 @@ public class Player {
 	public Integer getLastPathOfLegendTrophies() {
 		if (lastPathOfLegendTrophies == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			if (apiresult.has("lastPathOfLegendSeasonResult")
 					&& !apiresult.isNull("lastPathOfLegendSeasonResult")) {
@@ -500,7 +500,7 @@ public class Player {
 	public Integer getWinsAPI() {
 		if (wins == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			if (apiresult.has("wins")) {
 				wins = apiresult.getInt("wins");
@@ -512,7 +512,7 @@ public class Player {
 	public Integer getExpLevelAPI() {
 		if (expLevel == null) {
 			if (apiresult == null) {
-				apiresult = new JSONObject(APIUtil.getPlayerJson(tag));
+				apiresult = APIUtil.getPlayerJsonObject(tag);
 			}
 			if (apiresult.has("expLevel")) {
 				expLevel = apiresult.getInt("expLevel");
