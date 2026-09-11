@@ -143,10 +143,10 @@ public class Bot extends ListenerAdapter {
 			System.err.println("Failed to start RestApiServer: " + e.getMessage());
 		}
 
-		startNameUpdates();
-		startLoadingLists();
-		startReminders();
-		startMonthlyWinsSave();
+		// Die Zeitaufgaben starten erst in onReady, nicht hier: sie alle greifen
+		// ueber getJda() auf Discord zu, und jda wird erst mit dem ReadyEvent
+		// gesetzt. Hier gestartet lief der erste Durchlauf gegen null und der
+		// Thread starb mit einer NullPointerException — bei jedem Start.
 
 		JDABuilder.createDefault(token).enableIntents(GatewayIntent.GUILD_MEMBERS)
 				.setMemberCachePolicy(MemberCachePolicy.ALL).setChunkingFilter(ChunkingFilter.ALL)
@@ -405,11 +405,23 @@ public class Bot extends ListenerAdapter {
 		}
 	}
 
+	/** Damit ein zweites ReadyEvent nach einem Verbindungsabbruch nicht doppelt plant. */
+	private static final java.util.concurrent.atomic.AtomicBoolean aufgabenGestartet =
+			new java.util.concurrent.atomic.AtomicBoolean(false);
+
 	@Override
 	public void onReady(@Nonnull ReadyEvent event) {
 		setJda(event.getJDA());
 		util.DiscordLogger.setJda(event.getJDA());
 		registerCommands(event.getJDA(), guild_id);
+
+		// Erst jetzt, wo jda steht: siehe den Kommentar in main.
+		if (aufgabenGestartet.compareAndSet(false, true)) {
+			startNameUpdates();
+			startLoadingLists();
+			startReminders();
+			startMonthlyWinsSave();
+		}
 	}
 
 	@Override
