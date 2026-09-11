@@ -203,7 +203,7 @@ public class Clan {
 			// URL-kodieren des Spieler-Tags (# -> %23)
 			String encodedTag = java.net.URLEncoder.encode(clan_tag, java.nio.charset.StandardCharsets.UTF_8);
 
-			String url = "https://api.clashroyale.com/v1/clans/" + encodedTag + "/riverracelog?limit=1";
+			String url = APIUtil.BASIS_URL + "/clans/" + encodedTag + "/riverracelog?limit=1";
 
 			HttpClient client = HttpClient.newHttpClient();
 

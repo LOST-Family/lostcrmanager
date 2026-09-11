@@ -16,6 +16,19 @@ import lostcrmanager.Bot;
 
 public class APIUtil {
 
+	/**
+	 * Basisadresse der Clash Royale-API.
+	 *
+	 * Konfigurierbar, weil Supercell-Keys an feste IP-Adressen gebunden sind:
+	 * an einem Anschluss mit wechselnder IP funktioniert ein solcher Key nicht.
+	 * Mit CR_API_BASE_URL=https://proxy.royaleapi.dev/v1 laeuft der
+	 * Verkehr ueber den RoyaleAPI-Proxy, dessen feste Adresse (45.79.218.79)
+	 * beim Erstellen des Keys hinterlegt wird. Ohne gesetzte Variable bleibt
+	 * alles wie bisher.
+	 */
+	public static final String BASIS_URL = System.getenv()
+			.getOrDefault("CR_API_BASE_URL", "https://api.clashroyale.com/v1");
+
 	// Gemeinsamer Client mit Timeouts, damit hängende CR-API-Aufrufe keine
 	// Threads (z.B. die REST-API-Worker) dauerhaft blockieren können
 	private static final HttpClient CLIENT = HttpClient.newBuilder()
@@ -24,7 +37,7 @@ public class APIUtil {
 	private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
 
 	public static ApiResponse raw(String method, String path, Map<String, String> query, String jsonBody) {
-		StringBuilder urlBuilder = new StringBuilder("https://api.clashroyale.com/v1");
+		StringBuilder urlBuilder = new StringBuilder(BASIS_URL);
 		urlBuilder.append(path);
 		if (!query.isEmpty()) {
 			urlBuilder.append("?");
@@ -91,7 +104,7 @@ public class APIUtil {
 		// URL-kodieren des Spieler-Tags (# -> %23)
 		String encodedTag = java.net.URLEncoder.encode(clanTag, java.nio.charset.StandardCharsets.UTF_8);
 
-		String url = "https://api.clashroyale.com/v1/clans/" + encodedTag;
+		String url = BASIS_URL + "/clans/" + encodedTag;
 
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(REQUEST_TIMEOUT)
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
@@ -119,7 +132,7 @@ public class APIUtil {
 		// URL-kodieren des Spieler-Tags (# -> %23)
 		String encodedTag = java.net.URLEncoder.encode(playerTag, java.nio.charset.StandardCharsets.UTF_8);
 
-		String url = "https://api.clashroyale.com/v1/players/" + encodedTag;
+		String url = BASIS_URL + "/players/" + encodedTag;
 
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(REQUEST_TIMEOUT)
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
@@ -147,7 +160,7 @@ public class APIUtil {
 		// URL-kodieren des Clan-Tags (# -> %23)
 		String encodedTag = java.net.URLEncoder.encode(clanTag, java.nio.charset.StandardCharsets.UTF_8);
 
-		String url = "https://api.clashroyale.com/v1/clans/" + encodedTag + "/currentriverrace";
+		String url = BASIS_URL + "/clans/" + encodedTag + "/currentriverrace";
 
 		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(REQUEST_TIMEOUT)
 				.header("Authorization", "Bearer " + Bot.api_key).header("Accept", "application/json").GET().build();
