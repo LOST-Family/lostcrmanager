@@ -161,7 +161,7 @@ public class Player {
 	public boolean AccExists() {
 		try {
 			String encodedTag = URLEncoder.encode(tag, "UTF-8");
-			URL url = URI.create("https://api.clashroyale.com/v1/players/" + encodedTag).toURL();
+			URL url = URI.create(APIUtil.BASIS_URL + "/players/" + encodedTag).toURL();
 
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
