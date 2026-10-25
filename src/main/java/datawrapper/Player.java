@@ -161,11 +161,11 @@ public class Player {
 	public boolean AccExists() {
 		try {
 			String encodedTag = URLEncoder.encode(tag, "UTF-8");
-			URL url = URI.create(APIUtil.BASIS_URL + "/players/" + encodedTag).toURL();
+			URL url = URI.create(APIUtil.basisUrl() + "/players/" + encodedTag).toURL();
 
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
-			connection.setRequestProperty("Authorization", "Bearer " + Bot.api_key);
+			connection.setRequestProperty("Authorization", "Bearer " + APIUtil.apiKey());
 			connection.setRequestProperty("Accept", "application/json");
 
 			int responseCode = connection.getResponseCode();
