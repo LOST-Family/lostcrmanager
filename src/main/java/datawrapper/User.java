@@ -40,7 +40,7 @@ public class User {
 		if (isadmin == null) {
 			if (DBUtil.getValueFromSQL("SELECT is_admin FROM users WHERE discord_id = ?", Boolean.class,
 					userid) == null) {
-				DBUtil.executeUpdate("INSERT INTO users (discord_id, name, is_admin) VALUES (?, ?, ?)", userid,
+				DBUtil.executeUpdate("INSERT INTO users (discord_id, name, is_admin) VALUES (?, ?, ?) ON CONFLICT (discord_id) DO NOTHING", userid,
 						getNickname(), false);
 			}
 			isadmin = DBUtil.getValueFromSQL("SELECT is_admin FROM users WHERE discord_id = ?", Boolean.class, userid);
@@ -103,7 +103,7 @@ public class User {
 			boolean admin = false;
 			if (DBUtil.getValueFromSQL("SELECT is_admin FROM users WHERE discord_id = ?", Boolean.class,
 					userid) == null) {
-				DBUtil.executeUpdate("INSERT INTO users (discord_id, is_admin) VALUES (?, ?)", userid, false);
+				DBUtil.executeUpdate("INSERT INTO users (discord_id, is_admin) VALUES (?, ?) ON CONFLICT (discord_id) DO NOTHING", userid, false);
 			}
 			if (DBUtil.getValueFromSQL("SELECT is_admin FROM users WHERE discord_id = ?", Boolean.class, userid)) {
 				admin = true;
