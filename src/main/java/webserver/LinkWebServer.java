@@ -1,5 +1,7 @@
 package webserver;
 
+import webserver.api.RestApiServer;
+
 import org.json.JSONObject;
 
 import commands.wins.wins;
@@ -81,7 +83,8 @@ public class LinkWebServer {
 			try {
 				// Create HttpServer instance
 				System.out.println("[LinkAPI] Creating HttpServer instance...");
-				server = HttpServer.create(new InetSocketAddress(port), 0);
+				server = HttpServer.create(new InetSocketAddress(RestApiServer.bindAdresse(), port), 0);
+				System.out.println("Lausche auf " + RestApiServer.bindAdresse().getHostAddress() + ":" + port);
 
 				// Eigener Thread-Pool: mit dem Default-Executor (null) laufen alle
 				// Requests auf einem einzigen Thread - ein hängender Request
