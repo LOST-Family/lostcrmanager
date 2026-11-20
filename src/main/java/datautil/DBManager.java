@@ -50,6 +50,27 @@ public class DBManager {
 		return choices;
 	}
 
+	/** Suchen der freien ID und Einfügen gehören zusammen, sonst nehmen zwei gleichzeitige Einträge dieselbe ID. */
+	private static final Object KP_SPERRE = new Object();
+
+	/**
+	 * Trägt einen Kickpunkt ein und gibt seine ID zurück. Einziger Weg, Kickpunkte
+	 * anzulegen: getAvailableKPID() und das INSERT einzeln aufzurufen, ließ zwei
+	 * gleichzeitige Einträge (zwei Vize, Website neben Slash-Befehl) dieselbe ID
+	 * ziehen; der zweite scheiterte am Primärschlüssel, gemeldet wurde trotzdem
+	 * Erfolg.
+	 */
+	public static int addKickpoint(String playerTag, java.sql.Timestamp date, Object amount, String description,
+			String createdByDiscordId, java.sql.Timestamp createdAt, java.sql.Timestamp expiresAt) {
+		synchronized (KP_SPERRE) {
+			int id = getAvailableKPID();
+			DBUtil.executeUpdate(
+					"INSERT INTO kickpoints (id, player_tag, date, amount, description, created_by_discord_id, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+					id, playerTag, date, amount, description, createdByDiscordId, createdAt, expiresAt);
+			return id;
+		}
+	}
+
 	public static int getAvailableKPID() {
 		String sql = "SELECT id FROM kickpoints";
 		int available = 0;

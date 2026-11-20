@@ -459,11 +459,7 @@ public class ManagementApiHandler implements HttpHandler {
 		Timestamp timestampexpires = Timestamp.valueOf(dateTime.plusDays(c.getDaysKickpointsExpireAfter()));
 		Timestamp timestampnow = Timestamp.from(Instant.now());
 
-		int id = DBManager.getAvailableKPID();
-
-		DBUtil.executeUpdate(
-				"INSERT INTO kickpoints (id, player_tag, date, amount, description, created_by_discord_id, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-				id, playerTag, timestampcreated, amount, reason, discordUserId, timestampnow, timestampexpires);
+		int id = DBManager.addKickpoint(playerTag, timestampcreated, amount, reason, discordUserId, timestampnow, timestampexpires);
 
 		JSONObject response = new JSONObject();
 		response.put("success", true);
