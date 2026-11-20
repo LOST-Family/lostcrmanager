@@ -148,13 +148,21 @@ public class cwfails extends ListenerAdapter {
 		final boolean excludeLeadersFinal = excludeLeaders;
 
 		Thread thread = new Thread(() -> {
+			try {
 
-			// Collect CW fame data from all clans
-			ArrayList<Player> allCwfamePlayers = new ArrayList<>();
-			for (String clantag : clansListFinal) {
-				Clan c = new Clan(clantag);
-				ArrayList<Player> cwfameplayerlist = c.getCWFamePlayerList();
-				allCwfamePlayers.addAll(cwfameplayerlist);
+			// Collect CW fame data from all clans. Fehlen die Daten eines Clans
+			// (API weg, Clan nicht im letzten Rennen), wird abgebrochen: sonst stuende
+			// jeder dieser Spieler als "Nicht im Clan gemacht" da und bekaeme Kickpunkte.
+			List<String> fehlend = new ArrayList<>();
+			ArrayList<Player> allCwfamePlayers = sammleCwFame(clansListFinal,
+					tag -> new Clan(tag).getCWFamePlayerList(), fehlend);
+			if (!fehlend.isEmpty()) {
+				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
+						"Die Ergebnisse des letzten Flussrennens konnten für " + String.join(", ", fehlend)
+								+ " nicht abgerufen werden (Clash-Royale-API nicht erreichbar oder Clan nicht im letzten Rennen). "
+								+ "Es wurden keine Kickpunkte vergeben – bitte später erneut versuchen.",
+						MessageUtil.EmbedType.ERROR)).queue();
+				return;
 			}
 
 			// Build clan display for title
@@ -295,7 +303,14 @@ public class cwfails extends ListenerAdapter {
 				}
 		}
 
+			} catch (Exception e) {
+				System.err.println("Fehler beim Verarbeiten des Cwfails-Befehls: " + e);
+				e.printStackTrace();
+				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
+						"Ein Fehler ist aufgetreten: " + e.getMessage(), MessageUtil.EmbedType.ERROR)).queue();
+			}
 		});
+		thread.setName("cwfails-command-" + event.getUser().getId());
 		thread.start();
 
 	}
@@ -329,6 +344,29 @@ public class cwfails extends ListenerAdapter {
 			}
 			event.replyChoices(choices).queue();
 		}
+	}
+
+	/**
+	 * Sammelt die CW-Punkte aller Clans. Liefert der Abruf fuer einen Clan null oder
+	 * wirft er, landet dessen Tag in {@code fehlend} (der Aufrufer bricht dann ab).
+	 */
+	static ArrayList<Player> sammleCwFame(List<String> clans,
+			java.util.function.Function<String, ArrayList<Player>> abruf, List<String> fehlend) {
+		ArrayList<Player> alle = new ArrayList<>();
+		for (String clantag : clans) {
+			ArrayList<Player> liste = null;
+			try {
+				liste = abruf.apply(clantag);
+			} catch (RuntimeException e) {
+				System.err.println("CW-Daten fuer " + clantag + " nicht lesbar: " + e);
+			}
+			if (liste == null) {
+				fehlend.add(clantag);
+			} else {
+				alle.addAll(liste);
+			}
+		}
+		return alle;
 	}
 
 	private List<String> parseClanTags(String input) {
