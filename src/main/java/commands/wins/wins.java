@@ -24,6 +24,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import util.LangeListe;
 import util.MessageUtil;
 
 public class wins extends ListenerAdapter {
@@ -231,11 +232,7 @@ public class wins extends ListenerAdapter {
 						sb.append("\n");
 					}
 
-					// Split message if too long
 					String fullMessage = sb.toString();
-					if (fullMessage.length() > 4000) {
-						fullMessage = fullMessage.substring(0, 3997) + "...";
-					}
 
 					// Create refresh button - encode multiple clans in button ID
 					String clansEncoded = String.join(",", clansList);
@@ -248,9 +245,8 @@ public class wins extends ListenerAdapter {
 					DateTimeFormatter buttonFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
 					String formatiert = jetzt.format(buttonFormatter);
 
-					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, fullMessage,
-							MessageUtil.EmbedType.INFO, "Zuletzt aktualisiert am " + formatiert))
-							.setActionRow(refreshButton).queue();
+					sendeClanListe(event.getHook(), title, fullMessage, "Zuletzt aktualisiert am " + formatiert,
+							refreshButton);
 				}
 			} catch (Exception e) {
 				System.err.println("Fehler beim Verarbeiten des Wins-Befehls: " + e.getMessage());
@@ -583,11 +579,7 @@ public class wins extends ListenerAdapter {
 						sb.append("\n");
 					}
 
-					// Split message if too long
 					String fullMessage = sb.toString();
-					if (fullMessage.length() > 4000) {
-						fullMessage = fullMessage.substring(0, 3997) + "...";
-					}
 
 					// Create refresh button - encode multiple clans in button ID
 					String clansEncoded = String.join(",", clansList);
@@ -600,9 +592,8 @@ public class wins extends ListenerAdapter {
 					DateTimeFormatter buttonFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
 					String formatiert = jetzt.format(buttonFormatter);
 
-					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title, fullMessage,
-							MessageUtil.EmbedType.INFO, "Zuletzt aktualisiert am " + formatiert))
-							.setActionRow(refreshButton).queue();
+					sendeClanListe(event.getHook(), title, fullMessage, "Zuletzt aktualisiert am " + formatiert,
+							refreshButton);
 				}
 			} catch (Exception e) {
 				System.err.println("Fehler beim Verarbeiten des Wins-Refresh-Befehls: " + e.getMessage());
@@ -612,6 +603,28 @@ public class wins extends ListenerAdapter {
 		});
 		thread.setName("wins-refresh-" + event.getUser().getId());
 		thread.start();
+	}
+
+	/**
+	 * Schickt die Clan-Liste. Passt sie nicht in einen Embed (mehrere Clans
+	 * zusammen), wird sie nicht mehr still abgeschnitten - sortiert ist absteigend,
+	 * es fehlten also gerade die Spieler mit den wenigsten Wins -, sondern geht
+	 * vollstaendig als Datei mit.
+	 */
+	private void sendeClanListe(net.dv8tion.jda.api.interactions.InteractionHook hook, String title,
+			String fullMessage, String footer, Button refreshButton) {
+		LangeListe liste = LangeListe.aus(fullMessage);
+		if (liste.istGekuerzt()) {
+			java.io.ByteArrayInputStream daten = new java.io.ByteArrayInputStream(
+					liste.dateiText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+			hook.editOriginalAttachments(net.dv8tion.jda.api.utils.FileUpload.fromData(daten, "Wins.txt"))
+					.setEmbeds(MessageUtil.buildEmbed(title, liste.embedText, MessageUtil.EmbedType.INFO, footer))
+					.setActionRow(refreshButton).queue();
+		} else {
+			// Leere Anhangsliste: eine Datei aus einem frueheren, laengeren Stand verschwindet.
+			hook.editOriginalEmbeds(MessageUtil.buildEmbed(title, liste.embedText, MessageUtil.EmbedType.INFO, footer))
+					.setAttachments(java.util.Collections.emptyList()).setActionRow(refreshButton).queue();
+		}
 	}
 
 	// Helper method to filter players for clan wins display
