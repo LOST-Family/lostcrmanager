@@ -761,6 +761,9 @@ public class ManagementApiHandler implements HttpHandler {
 			return error("Insufficient permissions - must be coleader or higher in any clan", 403);
 		}
 
+		// Wie /link: Tags stehen gross und ohne O in der Datenbank. Ohne das legte die
+		// Website "#abc" neben "#ABC" an, und kein Abgleich mit der Spiel-API fand den Spieler.
+		playerTag = playerTag.trim().toUpperCase().replace("O", "0");
 		if (!playerTag.startsWith("#")) {
 			playerTag = "#" + playerTag;
 		}
@@ -812,7 +815,7 @@ public class ManagementApiHandler implements HttpHandler {
 			return error("Insufficient permissions - must be coleader or higher in any clan", 403);
 		}
 
-		playerTag = playerTag.toUpperCase();
+		playerTag = playerTag.trim().toUpperCase().replace("O", "0");
 		if (!playerTag.startsWith("#")) {
 			playerTag = "#" + playerTag;
 		}
