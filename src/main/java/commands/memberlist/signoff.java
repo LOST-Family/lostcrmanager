@@ -69,9 +69,12 @@ public class signoff extends ListenerAdapter {
 
             switch (action) {
                 case "create" ->                     {
-                        if (signoff.isActive()) {
+                        if (signoff.isActiveOrPlanned()) {
                             event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
-                                    "Dieser Spieler ist bereits abgemeldet. Nutze die 'extend' oder 'end' Action, um die Abmeldung zu ändern.",
+                                    (signoff.isPlanned() ? "Für diesen Spieler ist schon eine Abmeldung ab "
+                                            + MemberSignoff.berlin(signoff.getStartDate(), "dd.MM.yyyy") + " eingetragen."
+                                            : "Dieser Spieler ist bereits abgemeldet.")
+                                            + " Nutze die 'extend' oder 'end' Action, um die Abmeldung zu ändern.",
                                     MessageUtil.EmbedType.ERROR))
                                     .queue();
                             return;
@@ -79,13 +82,13 @@ public class signoff extends ListenerAdapter {
                         OptionMapping daysOption = event.getOption("days");
                         OptionMapping reasonOption = event.getOption("reason");
                         OptionMapping pingsOption = event.getOption("pings");
-                        Timestamp startDateObj = Timestamp.from(java.time.Instant.now());
-                        LocalDateTime startDateTimeLocal = LocalDateTime.now(ZoneId.of("Europe/Berlin"));
+                        LocalDateTime startDateTimeLocal = LocalDateTime.now(MemberSignoff.BERLIN);
+                        Timestamp startDateObj = MemberSignoff.ausBerlin(startDateTimeLocal);
                         if (startdateOption != null) {
                             try {
                                 DateTimeFormatter format = DateTimeFormatter.ofPattern("dd.MM.yyyy");
                                 startDateTimeLocal = java.time.LocalDate.parse(startdateOption.getAsString(), format).atStartOfDay();
-                                startDateObj = Timestamp.valueOf(startDateTimeLocal);
+                                startDateObj = MemberSignoff.ausBerlin(startDateTimeLocal);
                             } catch (final Exception e) {
                                 event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
                                         "Ungültiges Startdatum. Bitte im Format DD.MM.YYYY angeben.", MessageUtil.EmbedType.ERROR))
@@ -103,7 +106,7 @@ public class signoff extends ListenerAdapter {
                                 return;
                             }
                             LocalDateTime endDateTime = startDateTimeLocal.plusDays(days);
-                            endDate = Timestamp.valueOf(endDateTime);
+                            endDate = MemberSignoff.ausBerlin(endDateTime);
                             durationText = days + " Tag" + (days == 1 ? "" : "e");
                         }       String reason = reasonOption != null ? reasonOption.getAsString() : null;
                         boolean receivePings = pingsOption != null && pingsOption.getAsBoolean();
@@ -126,7 +129,7 @@ public class signoff extends ListenerAdapter {
                                 .queue();
                     }
                 case "end" ->                     {
-                        if (!signoff.isActive()) {
+                        if (!signoff.isActiveOrPlanned()) {
                             event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
                                     "Dieser Spieler ist aktuell nicht abgemeldet.", MessageUtil.EmbedType.ERROR))
                                     .queue();
@@ -140,7 +143,7 @@ public class signoff extends ListenerAdapter {
                                 .queue();
                     }
                 case "extend" ->                     {
-                        if (!signoff.isActive()) {
+                        if (!signoff.isActiveOrPlanned()) {
                             event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
                                     "Dieser Spieler ist aktuell nicht abgemeldet. Nutze die 'create' Action.",
                                     MessageUtil.EmbedType.ERROR))
@@ -161,27 +164,27 @@ public class signoff extends ListenerAdapter {
                             return;
                         }       Timestamp newEndDate;
                         if (signoff.isUnlimited()) {
-                            // If unlimited, extend from now
-                            LocalDateTime endDateTime = LocalDateTime.now(ZoneId.of("Europe/Berlin")).plusDays(days);
-                            newEndDate = Timestamp.valueOf(endDateTime);
+                            // unbegrenzt: ab jetzt rechnen – geplant und unbegrenzt: ab dem Start
+                            LocalDateTime basis = signoff.isPlanned() ? MemberSignoff.inBerlin(signoff.getStartDate())
+                                    : LocalDateTime.now(MemberSignoff.BERLIN);
+                            newEndDate = MemberSignoff.ausBerlin(basis.plusDays(days));
                         } else {
                             // If has end date, extend from that date
-                            LocalDateTime currentEnd = signoff.getEndDate().toLocalDateTime();
-                            LocalDateTime newEnd = currentEnd.plusDays(days);
-                            newEndDate = Timestamp.valueOf(newEnd);
+                            LocalDateTime currentEnd = MemberSignoff.inBerlin(signoff.getEndDate());
+                            newEndDate = MemberSignoff.ausBerlin(currentEnd.plusDays(days));
                         }       signoff.update(newEndDate);
                         String desc = "### Abmeldung erfolgreich verlängert.\n";
                         desc += "Spieler: " + MessageUtil.unformat(p.getInfoStringDB()) + "\n";
                         desc += "Clan: " + c.getInfoStringDB() + "\n";
                         desc += "Verlängert um: " + days + " Tag" + (days == 1 ? "" : "e") + "\n";
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
-                        desc += "Neues Enddatum: " + newEndDate.toLocalDateTime().format(formatter) + "\n";
+                        desc += "Neues Enddatum: " + MemberSignoff.inBerlin(newEndDate).format(formatter) + "\n";
                         event.getHook()
                                 .editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.SUCCESS))
                                 .queue();
                     }
                 case "info" ->                     {
-                        if (!signoff.isActive()) {
+                        if (!signoff.isActiveOrPlanned()) {
                             event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
                                     "Dieser Spieler ist aktuell nicht abgemeldet.", MessageUtil.EmbedType.INFO))
                                     .queue();
@@ -190,11 +193,12 @@ public class signoff extends ListenerAdapter {
                         desc += "Spieler: " + MessageUtil.unformat(p.getInfoStringDB()) + "\n";
                         desc += "Clan: " + c.getInfoStringDB() + "\n";
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy 'um' HH:mm 'Uhr'");
-                        desc += "Startdatum: " + signoff.getStartDate().toLocalDateTime().format(formatter) + "\n";
+                        desc += "Startdatum: " + MemberSignoff.inBerlin(signoff.getStartDate()).format(formatter)
+                                + (signoff.isPlanned() ? " (geplant, beginnt erst noch)" : "") + "\n";
                         if (signoff.isUnlimited()) {
                             desc += "Dauer: Unbegrenzt\n";
                         } else {
-                            desc += "Enddatum: " + signoff.getEndDate().toLocalDateTime().format(formatter) + "\n";
+                            desc += "Enddatum: " + MemberSignoff.inBerlin(signoff.getEndDate()).format(formatter) + "\n";
                         }       if (signoff.getReason() != null) {
                             desc += "Grund: " + signoff.getReason() + "\n";
                         }       desc += "Pings: " + (signoff.isReceivePings() ? "Aktiviert" : "Deaktiviert") + "\n";

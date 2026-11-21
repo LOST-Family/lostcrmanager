@@ -5,7 +5,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,6 +82,41 @@ public class MemberSignoff {
         }
         // Otherwise check if current time is before end date
         return now.before(endDate);
+    }
+
+    /**
+     * Aktiv oder noch geplant (Start liegt in der Zukunft) – also eine Abmeldung,
+     * die man ansehen, verlängern oder beenden können muss.
+     */
+    public boolean isActiveOrPlanned() {
+        if (!exists()) {
+            return false;
+        }
+        return endDate == null || Timestamp.from(Instant.now()).before(endDate);
+    }
+
+    public boolean isPlanned() {
+        return exists() && startDate != null && startDate.after(Timestamp.from(Instant.now()));
+    }
+
+    /*
+     * Zeitbasis: die Spalten sind „timestamp without time zone“ und werden wie
+     * NOW() der Datenbank (Etc/UTC) als UTC-Wanduhr geführt – isSignedOff
+     * vergleicht direkt mit NOW(). Eingaben und Anzeigen sind aber Berliner Zeit;
+     * deshalb laufen beide Richtungen über diese Helfer.
+     */
+    public static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
+
+    public static Timestamp ausBerlin(LocalDateTime berlinerZeit) {
+        return Timestamp.from(berlinerZeit.atZone(BERLIN).toInstant());
+    }
+
+    public static LocalDateTime inBerlin(Timestamp ts) {
+        return ts.toInstant().atZone(BERLIN).toLocalDateTime();
+    }
+
+    public static String berlin(Timestamp ts, String muster) {
+        return inBerlin(ts).format(DateTimeFormatter.ofPattern(muster));
     }
 
     /**
@@ -172,12 +210,12 @@ public class MemberSignoff {
      */
     public static List<MemberSignoff> getSignoffsForMonth(int year, int month) {
         YearMonth ym = YearMonth.of(year, month);
-        Timestamp monthStart = Timestamp.valueOf(ym.atDay(1).atStartOfDay());
-        Timestamp monthEnd = Timestamp.valueOf(ym.plusMonths(1).atDay(1).atStartOfDay());
+        Timestamp monthStart = ausBerlin(ym.atDay(1).atStartOfDay());
+        Timestamp monthEnd = ausBerlin(ym.plusMonths(1).atDay(1).atStartOfDay());
 
         String sql = "SELECT id, player_tag, start_date, end_date, reason, created_by_discord_id, created_at, receive_pings "
                 + "FROM member_signoffs "
-                + "WHERE start_date < ? AND (end_date IS NULL OR end_date >= ?) "
+                + "WHERE start_date < ? AND (end_date IS NULL OR (end_date >= ? AND end_date >= start_date)) "
                 + "ORDER BY start_date ASC";
 
         List<MemberSignoff> results = new ArrayList<>();

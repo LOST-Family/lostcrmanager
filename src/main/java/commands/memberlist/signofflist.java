@@ -159,13 +159,13 @@ public class signofflist extends ListenerAdapter {
                     .append(signoff.getPlayerTag()).append(") - ").append(d.clanName).append("\n");
 
             // Start date
-            desc.append("Von: ").append(signoff.getStartDate().toLocalDateTime().format(DATE_FORMAT));
+            desc.append("Von: ").append(MemberSignoff.inBerlin(signoff.getStartDate()).format(DATE_FORMAT));
 
             // End date
             if (signoff.getEndDate() == null) {
                 desc.append(" → Unbegrenzt");
             } else {
-                desc.append(" → ").append(signoff.getEndDate().toLocalDateTime().format(DATE_FORMAT));
+                desc.append(" → ").append(MemberSignoff.inBerlin(signoff.getEndDate()).format(DATE_FORMAT));
             }
             desc.append("\n");
 
