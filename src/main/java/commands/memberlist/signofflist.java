@@ -56,7 +56,9 @@ public class signofflist extends ListenerAdapter {
                     String[] parts = monthValue.split("-");
                     year = Integer.parseInt(parts[0]);
                     month = Integer.parseInt(parts[1]);
-                } catch (final NumberFormatException e) {
+                    if (month < 1 || month > 12)
+                        throw new NumberFormatException("Monat " + month);
+                } catch (final NumberFormatException | ArrayIndexOutOfBoundsException e) {
                     event.getHook().editOriginalEmbeds(
                             MessageUtil.buildEmbed(title,
                                     "Ungültiges Monatsformat. Bitte nutze die Autovervollständigung.",

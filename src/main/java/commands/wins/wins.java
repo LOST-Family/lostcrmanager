@@ -75,6 +75,8 @@ public class wins extends ListenerAdapter {
 				String[] parts = monthValue.split("-");
 				year = Integer.parseInt(parts[0]);
 				month = Integer.parseInt(parts[1]);
+				if (month < 1 || month > 12)
+					throw new NumberFormatException("Monat " + month);
 			} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 				event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 						"Ungültiges Monat-Format. Bitte wähle einen Monat aus der Liste.", MessageUtil.EmbedType.ERROR))
