@@ -148,6 +148,7 @@ public class Bot extends ListenerAdapter {
 		// gesetzt. Hier gestartet lief der erste Durchlauf gegen null und der
 		// Thread starb mit einer NullPointerException — bei jedem Start.
 
+		util.PingSchutz.setzeStandard();
 		JDABuilder.createDefault(token).enableIntents(GatewayIntent.GUILD_MEMBERS)
 				.setMemberCachePolicy(MemberCachePolicy.ALL).setChunkingFilter(ChunkingFilter.ALL)
 				.setActivity(Activity.playing("mit deinen Kickpunkten"))
