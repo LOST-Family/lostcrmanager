@@ -63,7 +63,22 @@ public class unlink extends ListenerAdapter {
 			for (String tag : taglist) {
 				Player p = new Player(tag);
 
-				if (p.IsLinked()) {
+				if (p.IsLinked() && p.getClanDB() != null) {
+					// Wie im LOST Manager: erst aus dem Clan austragen, sonst bleibt ein
+					// Mitgliedseintrag ohne Verknüpfung zurück.
+					String desc = "Der Spieler mit dem Tag " + tag
+							+ " ist noch in einem Clan eingetragen. Entferne ihn dort erst.";
+					if (firstTime) {
+						event.getHook()
+								.editOriginalEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.ERROR))
+								.queue();
+						firstTime = false;
+					} else {
+						event.getChannel()
+								.sendMessageEmbeds(MessageUtil.buildEmbed(title, desc, MessageUtil.EmbedType.ERROR))
+								.queue();
+					}
+				} else if (p.IsLinked()) {
 					DBUtil.executeUpdate("DELETE FROM players WHERE cr_tag = ?", tag);
 					String desc = "Die Verknüpfung des Spielers mit dem Tag " + tag + " wurde erfolgreich gelöscht.";
 					if (firstTime) {

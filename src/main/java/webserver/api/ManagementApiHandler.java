@@ -871,6 +871,9 @@ public class ManagementApiHandler implements HttpHandler {
 		if (!p.IsLinked()) {
 			return error("Player is not linked", 404);
 		}
+		if (p.getClanDB() != null) {
+			return error("Player is still in a clan. Remove from clan first.", 400);
+		}
 
 		DBUtil.executeUpdate("DELETE FROM players WHERE cr_tag = ?", playerTag);
 
