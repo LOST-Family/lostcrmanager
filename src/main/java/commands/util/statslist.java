@@ -387,9 +387,9 @@ import util.MessageUtil;
 		} else {
 			String role = switch (p.getRole()) {
 				case ADMIN -> "Admin";
-				case LEADER -> "AnfÃ¼hrer";
-				case COLEADER -> "Vize-AnfÃ¼hrer";
-				case ELDER -> "Ã„ltester";
+				case LEADER -> "Anführer";
+				case COLEADER -> "Vize-Anführer";
+				case ELDER -> "Ältester";
 				case MEMBER -> "Mitglied";
 				default -> "";
 			};
@@ -442,7 +442,7 @@ import util.MessageUtil;
 				Player.WinsData winsResult = p.getCurrentMonthWins();
 				String winsDisplay = String.valueOf(winsResult.wins);
 				if (winsResult.hasWarning) {
-					winsDisplay += " ��";
+					winsDisplay += " ⚠️";
 				}
 				yield winsDisplay;
 			}
@@ -473,8 +473,8 @@ import util.MessageUtil;
 	private String getFieldDisplayName(String field) {
 		return switch (field) {
 			case "Wins" -> "Wins (Monat)";
-			case "Trophies" -> "TrophÃ¤en";
-			case "UC-Trophies" -> "UC-TrophÃ¤en";
+			case "Trophies" -> "Trophäen";
+			case "UC-Trophies" -> "UC-Trophäen";
 			case "Ranked-Liga" -> "Ranked-Liga";
 			case "Letzte Ranked-Liga" -> "Letzte Ranked-Liga";
 			case "Letzte UC-Trophies" -> "Letzte UC-Trophies";
