@@ -109,6 +109,22 @@ public class editmember extends ListenerAdapter {
 				return;
 			}
 
+			// Bisherige Rolle schützen (wie beim Entfernen/Verschieben und im LOST Manager)
+			String alteRolle = DBUtil.getValueFromSQL("SELECT clan_role FROM clan_members WHERE player_tag = ?",
+					String.class, playertag);
+			util.RollenSchutz.Sperre sperre = util.RollenSchutz.pruefe(alteRolle,
+					userexecuted.getClanRoles().get(clantag));
+			if (sperre != util.RollenSchutz.Sperre.KEINE) {
+				event.getHook()
+						.editOriginalEmbeds(MessageUtil.buildEmbed(title,
+								sperre == util.RollenSchutz.Sperre.NUR_ADMIN
+										? "Um einen Anführer zu bearbeiten, musst du Admin sein."
+										: "Um einen Vize-Anführer zu bearbeiten, musst du Admin oder Anführer sein.",
+								MessageUtil.EmbedType.ERROR))
+						.queue();
+				return;
+			}
+
 			DBUtil.executeUpdate("UPDATE clan_members SET clan_role = ? WHERE player_tag = ?", role, playertag);
 			String rolestring = role.equals("leader") ? "Anführer"
 					: role.equals("coleader") ? "Vize-Anführer"
