@@ -14,6 +14,7 @@ import datautil.DBManager;
 import datawrapper.Clan;
 import datawrapper.Kickpoint;
 import datawrapper.Player;
+import datawrapper.User;
 import lostcrmanager.Bot;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -147,9 +148,7 @@ public class kpmember extends ListenerAdapter {
 
 					desc += "Aktiv seit: " + String.format("%dd %dh %dm %ds", days2, hours2, minutes2, seconds2) + "\n";
 
-					Member createdby = Bot.getJda().getGuildById(Bot.guild_id)
-							.getMemberById(kp.getUserGivenBy().getUserID());
-					String createdbyname = createdby.getEffectiveName();
+					String createdbyname = erstellerName(kp);
 
 					desc += "Erstellt: von " + createdbyname + " am "
 							+ kp.getGivenDate().atZoneSameInstant(ZoneId.of("Europe/Berlin")).format(formatter2) + "\n";
@@ -222,7 +221,7 @@ public class kpmember extends ListenerAdapter {
 				Clan c = p.getClanDB();
 
 				if (c == null) {
-					event.replyEmbeds(MessageUtil.buildEmbed(title,
+					event.getHook().editOriginalEmbeds(MessageUtil.buildEmbed(title,
 							"Dieser Spieler existiert nicht oder ist in keinem Clan.", MessageUtil.EmbedType.ERROR))
 							.queue();
 					return;
@@ -288,9 +287,7 @@ public class kpmember extends ListenerAdapter {
 						desc += "Aktiv seit: " + String.format("%dd %dh %dm %ds", days2, hours2, minutes2, seconds2)
 								+ "\n";
 
-						Member createdby = Bot.getJda().getGuildById(Bot.guild_id)
-								.getMemberById(kp.getUserGivenBy().getUserID());
-						String createdbyname = createdby.getEffectiveName();
+						String createdbyname = erstellerName(kp);
 
 						desc += "Erstellt: von " + createdbyname + " am "
 								+ kp.getGivenDate().atZoneSameInstant(ZoneId.of("Europe/Berlin")).format(formatter2)
@@ -315,6 +312,14 @@ public class kpmember extends ListenerAdapter {
 						"Zuletzt aktualisiert am " + formatiert)).setActionRow(refreshButton).queue();
 
 		}).start();
+	}
+
+	/** Name des Erstellers; „Unbekannt“, wenn er den Server verlassen hat (sonst stirbt der Thread und die Antwort hängt). */
+	private static String erstellerName(Kickpoint kp) {
+		User u = kp.getUserGivenBy();
+		var guild = Bot.getJda().getGuildById(Bot.guild_id);
+		Member m = (u == null || guild == null) ? null : guild.getMemberById(u.getUserID());
+		return m == null ? "Unbekannt" : m.getEffectiveName();
 	}
 
 }

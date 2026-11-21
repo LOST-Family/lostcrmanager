@@ -124,6 +124,7 @@ import util.MessageUtil;
 						max, days, clantag);
 			}
 
+			c = new Clan(clantag); // frisch lesen, sonst zeigt die Bestätigung die alte Gültigkeitsdauer (zwischengespeichert)
 			String desc = "### Die Clan-Settings wurden bearbeitet.\n";
 			desc += "Clan: " + c.getInfoStringDB() + "\n";
 			desc += "Gültigkeitsdauer von Kickpunkten: " + c.getDaysKickpointsExpireAfter() + " Tage\n";
